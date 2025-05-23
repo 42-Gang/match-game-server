@@ -20,13 +20,23 @@ function startServer(server: Server) {
 async function configureServer() {
   // 서버 정보 Redis에 등록
   await redis.hSet(`match-server:${process.env.SERVER_NAME}`, {
-    host: 'localhost',
-    port: process.env.PORT,
-    currentUsers: 0,
-    maxUsers: 4,
+    serverName: process.env.SERVER_NAME,
     updatedAt: Date.now(),
   });
   await redis.sAdd('match-server:active', process.env.SERVER_NAME);
+
+  await redis.expire(`match-server:${process.env.SERVER_NAME}`, 60 * 11);
+  await redis.expire('match-server:active', 60 * 10);
+
+  setInterval(
+    () => {
+      redis.hSet(`match-server:${process.env.SERVER_NAME}`, {
+        updatedAt: Date.now(),
+      });
+      redis.expire(`match-server:${process.env.SERVER_NAME}`, 60 * 11);
+    },
+    10 * 60 * 1000,
+  );
 }
 
 export async function setupGracefulShutdown(server: Server, socket: SocketIOServer) {
@@ -52,6 +62,7 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
 async function init() {
   const { httpServer, io } = registerSocketServer();
   await configureServer();
+
   startServer(httpServer);
   await setupGracefulShutdown(httpServer, io); // 서버 종료 시그널 핸들러 등록
 }
