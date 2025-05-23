@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { createClient } from 'redis';
 import { v4 as uuid } from 'uuid';
+import {redis} from "./plugins/redis.js";
 
 const serverId = uuid(); // 이 서버의 고유 ID
 const PORT = process.env.PORT || 3001;
@@ -9,9 +9,6 @@ const PORT = process.env.PORT || 3001;
 async function init() {
   const httpServer = createServer();
   const io = new SocketIOServer(httpServer);
-
-  const redis = createClient({ url: 'redis://localhost:6379' });
-  await redis.connect();
 
   // 서버 정보 Redis에 등록
   await redis.hSet(`match-server:${serverId}`, {
