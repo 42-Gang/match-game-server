@@ -8,6 +8,7 @@ declare global {
       KAFKA_BROKER: string;
 
       PORT: string;
+      SERVER_NAME: string;
     }
   }
 }
