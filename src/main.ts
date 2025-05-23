@@ -47,7 +47,7 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
       }
 
       server.close();
-      socket.close();
+      await socket.close();
 
       await redis.sRem('match-server:active', serverId);
       await redis.del(`match-server:${serverId}`);
