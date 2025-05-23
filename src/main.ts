@@ -18,30 +18,25 @@ function registerSocketServer(diContainer: AwilixContainer) {
 
 function startServer(server: Server) {
   server.listen(process.env.PORT, () => {
-    console.log(`Match Game Server running on port ${process.env.PORT}`);
+    logger.info(`Match Game Server running on port ${process.env.PORT}`);
   });
 }
 
+function getMatchServerKey() {
+  return `match-server:${process.env.SERVER_NAME}`;
+}
+
 async function configureServer() {
-  // 서버 정보 Redis에 등록
-  await redis.hSet(`match-server:${process.env.SERVER_NAME}`, {
+  await redis.hSet(getMatchServerKey(), {
     serverName: process.env.SERVER_NAME,
-    updatedAt: Date.now(),
   });
-  await redis.sAdd('match-server:active', process.env.SERVER_NAME);
 
-  await redis.expire(`match-server:${process.env.SERVER_NAME}`, 60 * 11);
-  await redis.expire('match-server:active', 60 * 10);
+  await redis.expire(getMatchServerKey(), 60 + 10);
 
-  setInterval(
-    () => {
-      redis.hSet(`match-server:${process.env.SERVER_NAME}`, {
-        updatedAt: Date.now(),
-      });
-      redis.expire(`match-server:${process.env.SERVER_NAME}`, 60 * 11);
-    },
-    10 * 60 * 1000,
-  );
+  setInterval(async () => {
+    logger.info('Match Server Heartbeat');
+    await redis.expire(getMatchServerKey(), 60 + 10);
+  }, 60 * 1000);
 }
 
 export async function setupGracefulShutdown(server: Server, socket: SocketIOServer) {
