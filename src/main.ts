@@ -2,12 +2,17 @@ import { createServer, Server } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { redis } from './plugins/redis.js';
 import closeWithGrace from 'close-with-grace';
+import { registerSocketGateway } from './v1/sockets/gateway.js';
+import { AwilixContainer, createContainer } from 'awilix';
+import { logger } from './plugins/logger.js';
 
-function registerSocketServer() {
+function registerSocketServer(diContainer: AwilixContainer) {
   const httpServer = createServer();
   const io = new SocketIOServer(httpServer);
+  io.logger = logger;
+  io.diContainer = diContainer;
 
-  io.on('connection', (socket) => {});
+  registerSocketGateway(diContainer, io);
   return { httpServer, io };
 }
 
@@ -60,7 +65,8 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
 }
 
 async function init() {
-  const { httpServer, io } = registerSocketServer();
+  const diContainer = createContainer();
+  const { httpServer, io } = registerSocketServer(diContainer);
   await configureServer();
 
   startServer(httpServer);

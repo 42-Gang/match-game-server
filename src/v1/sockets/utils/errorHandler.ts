@@ -1,10 +1,10 @@
-import { FastifyBaseLogger } from 'fastify';
 import { ZodError } from 'zod';
 import { Socket } from 'socket.io';
+import { Logger } from 'pino';
 
 export function socketErrorHandler<Args extends unknown[], Return>(
   socket: Socket,
-  logger: FastifyBaseLogger,
+  logger: Logger,
   handler: (...args: Args) => Return | Promise<Return>,
 ): (...args: Args) => void {
   const handleError = (err: unknown) => {
