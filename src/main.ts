@@ -5,6 +5,7 @@ import closeWithGrace from 'close-with-grace';
 import { registerSocketGateway } from './sockets/gateway.js';
 import { AwilixContainer, createContainer } from 'awilix';
 import { logger } from './plugins/logger.js';
+import * as process from 'node:process';
 
 function registerSocketServer(diContainer: AwilixContainer) {
   const httpServer = createServer();
@@ -45,7 +46,7 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
       delay: Number(process.env.CLOSE_GRACE_PERIOD) || 500,
     },
     async ({ err }) => {
-      if (err != null) {
+      if (err !== null) {
         console.log(err);
       }
 
