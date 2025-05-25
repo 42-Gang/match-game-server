@@ -8,6 +8,8 @@ import { logger } from './plugins/logger.js';
 import * as process from 'node:process';
 import { startConsumer } from './kafka/consumer.js';
 
+const MATCH_SERVER_ACTIVE_KEY = 'match-server:active';
+
 function registerSocketServer(diContainer: AwilixContainer) {
   const httpServer = createServer();
   const io = new SocketIOServer(httpServer);
@@ -54,8 +56,8 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
       server.close();
       await socket.close();
 
-      await redis.sRem('match-server:active', process.env.SERVER_NAME);
-      await redis.del(`match-server:${process.env.SERVER_NAME}`);
+      await redis.sRem(MATCH_SERVER_ACTIVE_KEY, process.env.SERVER_NAME);
+      await redis.del(getMatchServerKey());
       await redis.quit();
     },
   );
