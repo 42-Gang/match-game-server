@@ -3,9 +3,10 @@ import { Server as SocketIOServer } from 'socket.io';
 import { redis } from './plugins/redis.js';
 import closeWithGrace from 'close-with-grace';
 import { registerSocketGateway } from './sockets/gateway.js';
-import { AwilixContainer, createContainer } from 'awilix';
+import { asClass, asFunction, AwilixContainer, createContainer, Lifetime } from 'awilix';
 import { logger } from './plugins/logger.js';
 import * as process from 'node:process';
+import { startConsumer } from './kafka/consumer.js';
 
 function registerSocketServer(diContainer: AwilixContainer) {
   const httpServer = createServer();
@@ -60,12 +61,35 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
   );
 }
 
+async function registerKafkaConsumer(diContainer: AwilixContainer) {
+  const NODE_EXTENSION = process.env.NODE_ENV == 'dev' ? 'ts' : 'js';
+  await diContainer.loadModules([`./**/src/**/*.topic.handler.${NODE_EXTENSION}`], {
+    esModules: true,
+    formatName: 'camelCase',
+    resolverOptions: {
+      lifetime: Lifetime.SINGLETON,
+      register: asClass,
+      injectionMode: 'CLASSIC',
+    },
+  });
+  diContainer.register({
+    kafkaConsumer: asFunction(startConsumer, {
+      lifetime: Lifetime.SINGLETON,
+      injectionMode: 'CLASSIC',
+    }),
+  });
+  (async () => {
+    await diContainer.resolve('kafkaConsumer');
+  })();
+}
+
 async function init() {
   const diContainer = createContainer();
   const { httpServer, io } = registerSocketServer(diContainer);
   await configureServer();
 
   startServer(httpServer);
+  registerKafkaConsumer(diContainer);
   await setupGracefulShutdown(httpServer, io); // 서버 종료 시그널 핸들러 등록
 }
 
