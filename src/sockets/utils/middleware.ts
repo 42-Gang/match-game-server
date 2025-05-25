@@ -1,4 +1,4 @@
-import { BadRequestException, UnAuthorizedException } from '../../../common/exceptions/core.error.js';
+import { BadRequestException, UnAuthorizedException } from '../../common/exceptions/core.error.js';
 import { Socket } from 'socket.io';
 import { verifyAccessToken } from './auth.js';
 

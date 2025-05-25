@@ -1,6 +1,6 @@
-import { kafka } from '../../plugins/kafka.js';
+import { kafka } from '../plugins/kafka.js';
 import { KafkaTopicConsumer } from './consumers/kafka.topic.consumer.js';
-import { logger } from '../../plugins/logger.js';
+import { logger } from '../plugins/logger.js';
 
 export async function startConsumer(
 ) {

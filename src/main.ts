@@ -2,7 +2,7 @@ import { createServer, Server } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { redis } from './plugins/redis.js';
 import closeWithGrace from 'close-with-grace';
-import { registerSocketGateway } from './v1/sockets/gateway.js';
+import { registerSocketGateway } from './sockets/gateway.js';
 import { AwilixContainer, createContainer } from 'awilix';
 import { logger } from './plugins/logger.js';
 
