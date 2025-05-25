@@ -16,9 +16,9 @@ export function socketErrorHandler<Args extends unknown[], Return>(
       return;
     }
     if (err instanceof Error) {
-      logger.error(err, 'Socket error');
+      logger.error({ err }, 'Unexpected error type');
       socket.emit('error', {
-        message: err.message,
+        message: 'An unexpected error occurred.',
       });
       return;
     }
