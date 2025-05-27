@@ -1,6 +1,7 @@
 import { BadRequestException, UnAuthorizedException } from '../../common/exceptions/core.error.js';
 import { Socket } from 'socket.io';
 import { verifyAccessToken } from './auth.js';
+import { logger } from '../../plugins/logger.js';
 
 type NextFunction = (err?: Error) => void;
 
@@ -17,7 +18,7 @@ export async function socketMiddleware(socket: Socket, next: NextFunction) {
     socket.data.userId = Number(userId);
     next();
   } catch (e) {
-    console.error('Socket middleware error:', e);
+    logger.error(e, 'Socket middleware error:');
     next(e as Error);
   }
 }
