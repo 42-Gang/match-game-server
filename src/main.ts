@@ -3,7 +3,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import { redis } from './plugins/redis.js';
 import closeWithGrace from 'close-with-grace';
 import { registerSocketGateway } from './sockets/gateway.js';
-import { asClass, asFunction, AwilixContainer, createContainer, Lifetime } from 'awilix';
+import { asClass, asFunction, asValue, AwilixContainer, createContainer, Lifetime } from 'awilix';
 import { logger } from './plugins/logger.js';
 import * as process from 'node:process';
 import { startConsumer } from './kafka/consumer.js';
@@ -74,15 +74,18 @@ async function registerKafkaConsumer(diContainer: AwilixContainer) {
       injectionMode: 'CLASSIC',
     },
   });
+
+  const cradle = diContainer.cradle;
+  const consumerNames = Object.keys(cradle).filter((k) => k.endsWith('TopicConsumer'));
+  const kafkaTopicConsumers = consumerNames.map((name) => cradle[name]);
   diContainer.register({
+    topicConsumers: asValue(kafkaTopicConsumers),
     kafkaConsumer: asFunction(startConsumer, {
       lifetime: Lifetime.SINGLETON,
       injectionMode: 'CLASSIC',
     }),
   });
-  (async () => {
-    await diContainer.resolve('kafkaConsumer');
-  })();
+  await diContainer.resolve('kafkaConsumer');
 }
 
 async function init() {
