@@ -19,6 +19,6 @@ export async function socketMiddleware(socket: Socket, next: NextFunction) {
     next();
   } catch (e) {
     logger.error(e, 'Socket middleware error:');
-    next(e as Error);
+    next(e instanceof Error ? e : new Error(String(e)));
   }
 }
