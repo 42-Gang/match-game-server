@@ -9,7 +9,7 @@ export const registerSocketGateway = (diContainer: AwilixContainer, io: Server) 
   const gameNamespace = io.of('/game');
 
   diContainer.register({
-    waitingNamespace: asValue(gameNamespace),
+    gameNamespace: asValue(gameNamespace),
   });
 
   startGameNamespace(gameNamespace);
