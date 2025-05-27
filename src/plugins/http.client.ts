@@ -23,7 +23,7 @@ export class GotClient {
   constructor(options?: ExtendOptions) {
     this.client = got.extend({
       responseType: 'json',
-      timeout: { request: 300 },
+      timeout: { request: 3000 },
       ...options,
     });
   }
