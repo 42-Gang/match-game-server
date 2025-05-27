@@ -22,6 +22,11 @@ export function socketErrorHandler<Args extends unknown[], Return>(
       });
       return;
     }
+
+    logger.error({ err }, 'Non-Error exception caught');
+    socket.emit('error', {
+      message: 'An unknown error occurred.',
+    });
   };
 
   return (...args: Args): void => {
