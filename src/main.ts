@@ -7,6 +7,9 @@ import { asClass, asFunction, asValue, AwilixContainer, createContainer, Lifetim
 import { logger } from './plugins/logger.js';
 import * as process from 'node:process';
 import { startConsumer } from './kafka/consumer.js';
+import pino from 'pino';
+import BaseLogger = pino.BaseLogger;
+import { setDiContainer } from './plugins/container.js';
 
 const MATCH_SERVER_ACTIVE_KEY = 'match-server:active';
 
@@ -43,14 +46,18 @@ async function configureServer() {
   }, 60 * 1000);
 }
 
-export async function setupGracefulShutdown(server: Server, socket: SocketIOServer) {
+export async function setupGracefulShutdown(
+  server: Server,
+  socket: SocketIOServer,
+  logger: BaseLogger,
+) {
   closeWithGrace(
     {
       delay: Number(process.env.CLOSE_GRACE_PERIOD) || 500,
     },
     async ({ err }) => {
       if (err !== null) {
-        console.log(err);
+        logger.error(err, 'Error during graceful shutdown signal processing');
       }
 
       server.close();
@@ -92,10 +99,11 @@ async function init() {
   const diContainer = createContainer();
   const { httpServer, io } = registerSocketServer(diContainer);
   await configureServer();
+  await setDiContainer(httpServer, diContainer);
 
   startServer(httpServer);
   registerKafkaConsumer(diContainer);
-  await setupGracefulShutdown(httpServer, io); // 서버 종료 시그널 핸들러 등록
+  await setupGracefulShutdown(httpServer, io, logger); // 서버 종료 시그널 핸들러 등록
 }
 
 init();
