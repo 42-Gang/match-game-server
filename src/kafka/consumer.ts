@@ -2,10 +2,8 @@ import { kafka } from '../plugins/kafka.js';
 import { KafkaTopicConsumer } from './consumers/kafka.topic.consumer.js';
 import { logger } from '../plugins/logger.js';
 
-export async function startConsumer() {
+export async function startConsumer(topicConsumers: KafkaTopicConsumer[]) {
   const consumer = kafka.consumer({ groupId: 'MAIN_GAME_SERVER', sessionTimeout: 10000 });
-  const topicConsumers: KafkaTopicConsumer[] = [];
-
   await consumer.connect();
 
   for (const topicConsumer of topicConsumers) {
