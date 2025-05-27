@@ -15,7 +15,7 @@ export function startGameNamespace(namespace: Namespace) {
     });
 
     socket.on('error', (error: Error) => {
-      logger.info(`Error in waiting namespace: ${error.message}`);
+      logger.error(error, `Error in game namespace (${socket.id}):`);
     });
   });
 }
