@@ -15,16 +15,16 @@ export async function verifyAccessToken(token: string): Promise<{
   });
 
   if (response.headers['x-authenticated'] === undefined) {
-    throw new UnAuthorizedException('');
+    throw new UnAuthorizedException();
   }
 
   if (response.headers['x-authenticated'] !== 'true') {
-    throw new UnAuthorizedException('');
+    throw new UnAuthorizedException();
   }
 
   const userId = response.headers['x-user-id'];
   if (Array.isArray(userId) || userId === undefined) {
-    throw new UnAuthorizedException('');
+    throw new UnAuthorizedException();
   }
 
   return {
