@@ -12,8 +12,4 @@ declare module 'socket.io' {
     };
     redis: RedisClient;
   }
-
-  interface Server {
-    redis: RedisClient;
-  }
 }
