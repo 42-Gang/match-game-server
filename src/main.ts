@@ -65,7 +65,7 @@ export async function setupGracefulShutdown(server: Server, socket: SocketIOServ
 
 async function registerKafkaConsumer(diContainer: AwilixContainer) {
   const NODE_EXTENSION = process.env.NODE_ENV == 'dev' ? 'ts' : 'js';
-  await diContainer.loadModules([`./**/src/**/*.topic.handler.${NODE_EXTENSION}`], {
+  await diContainer.loadModules([`./**/src/**/*.topic.consumer.${NODE_EXTENSION}`], {
     esModules: true,
     formatName: 'camelCase',
     resolverOptions: {
