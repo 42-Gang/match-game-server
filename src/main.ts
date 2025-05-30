@@ -11,7 +11,7 @@ import pino from 'pino';
 import BaseLogger = pino.BaseLogger;
 import { setDiContainer } from './plugins/container.js';
 
-const MATCH_SERVER_ACTIVE_KEY = 'match-server:active';
+let heartbeatInterval: NodeJS.Timeout;
 
 function registerSocketServer(diContainer: AwilixContainer) {
   const httpServer = createServer();
@@ -37,10 +37,9 @@ async function configureServer() {
   await redis.hSet(getMatchServerKey(), {
     serverName: process.env.SERVER_NAME,
   });
-
   await redis.expire(getMatchServerKey(), 60 + 10);
 
-  setInterval(async () => {
+  heartbeatInterval = setInterval(async () => {
     logger.info('Match Server Heartbeat');
     await redis.expire(getMatchServerKey(), 60 + 10);
   }, 60 * 1000);
@@ -51,23 +50,21 @@ export async function setupGracefulShutdown(
   socket: SocketIOServer,
   logger: BaseLogger,
 ) {
-  closeWithGrace(
-    {
-      delay: Number(process.env.CLOSE_GRACE_PERIOD) || 500,
-    },
-    async ({ err }) => {
-      if (err !== null) {
-        logger.error(err, 'Error during graceful shutdown signal processing');
-      }
+  closeWithGrace(async () => {
+    clearInterval(heartbeatInterval);
+    logger.info('Graceful shutdown initiated');
 
-      server.close();
-      await socket.close();
+    server.close();
+    logger.info('HTTP server closed');
 
-      await redis.sRem(MATCH_SERVER_ACTIVE_KEY, process.env.SERVER_NAME);
-      await redis.del(getMatchServerKey());
-      await redis.quit();
-    },
-  );
+    await socket.close();
+    logger.info('Socket.IO server closed');
+
+    await redis.del(getMatchServerKey());
+    logger.info('Match server key deleted from Redis');
+    await redis.quit();
+    logger.info('Redis connection closed');
+  });
 }
 
 async function registerKafkaConsumer(diContainer: AwilixContainer) {
