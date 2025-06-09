@@ -4,7 +4,7 @@ import pino from 'pino';
 import BaseLogger = pino.BaseLogger;
 
 export async function startConsumer(topicConsumers: KafkaTopicConsumer[], logger: BaseLogger) {
-  const consumer = kafka.consumer({ groupId: 'MAIN_GAME_SERVER', sessionTimeout: 10000 });
+  const consumer = kafka.consumer({ groupId: 'MATCH_GAME_SERVER', sessionTimeout: 10000 }); // Adjust groupId as needed
   await consumer.connect();
 
   for (const topicConsumer of topicConsumers) {
