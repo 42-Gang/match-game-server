@@ -8,9 +8,6 @@ export default class Score {
     if (player1score < 0 || player2score < 0) {
       throw new Error('Scores cannot be negative');
     }
-    if (player1score > 11 || player2score > 11) {
-      throw new Error('Scores cannot exceed 11');
-    }
   }
 
   toScoreDto(): ScoreDto {
