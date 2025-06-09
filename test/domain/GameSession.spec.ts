@@ -7,6 +7,7 @@ import Racket from '../../src/domain/physics/Racket.js';
 import Judgement from '../../src/domain/Judgement.js';
 import Scores from '../../src/domain/Scores.js';
 import { beforeEach, it } from 'vitest';
+import Players from '../../src/domain/Players.js';
 
 beforeEach(() => {
   const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) });
@@ -19,7 +20,9 @@ beforeEach(() => {
   const scores = new Scores();
   const judgement = new Judgement(scores);
 
-  gameSession = new GameSession(1, physicsEngine, 1, 2, judgement);
+  const players = new Players(1, 2);
+
+  gameSession = new GameSession(1, physicsEngine, players, judgement);
 });
 
 let gameSession: GameSession;

@@ -1,6 +1,7 @@
 import PhysicsEngine from './physics/PhysicsEngine.js';
 import { playerInputSchema, PlayerInputType, ScoreDto, SessionStateType } from './game.schema.js';
 import Judgement from './Judgement.js';
+import Players from './Players.js';
 
 export default class GameSession {
   private readonly dt = 1 / 60;
@@ -8,8 +9,7 @@ export default class GameSession {
   constructor(
     private readonly matchId: number,
     private readonly engine: PhysicsEngine,
-    private readonly player1Id: number,
-    private readonly player2Id: number,
+    private readonly players: Players,
     private readonly judgement: Judgement,
   ) {}
 
