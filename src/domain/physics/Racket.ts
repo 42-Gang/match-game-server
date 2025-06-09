@@ -1,7 +1,6 @@
 import * as CANNON from 'cannon-es';
 import PhysicsEngine from './PhysicsEngine.js';
-
-export type SwingType = 'BACKSWING' | 'DRIVE';
+import { SwingType } from '../game.schema.js';
 
 export default class Racket {
   public body: CANNON.Body;
