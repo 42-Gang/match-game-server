@@ -2,9 +2,9 @@ import PhysicsEngine from './physics/PhysicsEngine.js';
 import Ball from './physics/Ball.js';
 import Racket from './physics/Racket.js';
 import Table from './physics/Table.js';
-import Score from './Score.js';
 import GameResult from './GameResult.js';
-import { playerInputSchema, PlayerInputType, SessionStateType } from './game.schema.js';
+import { playerInputSchema, PlayerInputType, ScoreDto, SessionStateType } from './game.schema.js';
+import Judgement from './Judgement.js';
 
 export default class GameSession {
   private readonly dt = 1 / 60;
@@ -18,7 +18,7 @@ export default class GameSession {
     private readonly rocket2: Racket,
     private readonly player1Id: number,
     private readonly player2Id: number,
-    private readonly score: Score,
+    private readonly judgement: Judgement,
   ) {}
 
   applyInput(playerId: number, input: PlayerInputType) {
@@ -30,16 +30,6 @@ export default class GameSession {
     if (input.swing) {
       racket.swing(input.swing);
     }
-  }
-
-  private getRacketByPlayerId(playerId: number): Racket {
-    if (this.player1Id === playerId) {
-      return this.rocket1;
-    }
-    if (this.player2Id === playerId) {
-      return this.rocket2;
-    }
-    throw new Error(`Player with ID ${playerId} does not have a racket.`);
   }
 
   tick(): SessionStateType | GameResult {
@@ -57,5 +47,31 @@ export default class GameSession {
       racket1: rocket1Pos,
       racket2: rocket2Pos,
     };
+  }
+
+  // isPointOver(): boolean {
+  //   // 1점이 끝났는지에 대한 로직은 필요에 따라 수정
+  //   // 예시: 점수가 추가된 경우 1점 종료로 간주
+  //   return this.score.hasWinner();
+  // }
+  //
+  // isGameOver(): boolean {
+  //   // 게임 종료 조건(예: 11점 선취 등)
+  //   return this.score.hasWinner();
+  // }
+
+  getScore(): ScoreDto {
+    const score = this.judgement.getCurrentScore();
+    return score.toScoreDto();
+  }
+
+  private getRacketByPlayerId(playerId: number): Racket {
+    if (this.player1Id === playerId) {
+      return this.rocket1;
+    }
+    if (this.player2Id === playerId) {
+      return this.rocket2;
+    }
+    throw new Error(`Player with ID ${playerId} does not have a racket.`);
   }
 }

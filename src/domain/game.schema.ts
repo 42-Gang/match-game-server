@@ -21,3 +21,12 @@ export const sessionStateSchema = z.object({
   racket2: vec3Schema,
 });
 export type SessionStateType = TypeOf<typeof sessionStateSchema>;
+
+export const scoreSchema = z.object({
+  player1score: z.number(),
+  player2score: z.number(),
+});
+export type ScoreDto = TypeOf<typeof scoreSchema>;
+
+export const playerTypeSchema = z.enum(['PLAYER1', 'PLAYER2']);
+export type PlayerType = TypeOf<typeof playerTypeSchema>;

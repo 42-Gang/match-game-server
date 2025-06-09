@@ -1,4 +1,4 @@
-import { PlayerType, playerTypeSchema, ScoreType } from './game.schema.js';
+import { PlayerType, playerTypeSchema, ScoreDto } from './game.schema.js';
 
 export default class Score {
   constructor(
@@ -19,7 +19,7 @@ export default class Score {
     }
   }
 
-  getPoints(): ScoreType {
+  toScoreDto(): ScoreDto {
     return {
       player1score: this.player1score,
       player2score: this.player2score,
