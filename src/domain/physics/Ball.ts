@@ -1,10 +1,9 @@
 import * as CANNON from 'cannon-es';
-import PhysicsEngine from './PhysicsEngine.js';
 
 export default class Ball {
   public body: CANNON.Body;
 
-  constructor(private engine: PhysicsEngine) {
+  constructor() {
     const material = new CANNON.Material('ballMaterial');
     this.body = new CANNON.Body({
       mass: 0.0027, // 약 2.7g
@@ -12,7 +11,6 @@ export default class Ball {
       material,
     });
     this.reset();
-    engine.addBody(this.body);
   }
 
   reset() {

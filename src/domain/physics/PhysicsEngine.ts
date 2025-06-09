@@ -14,6 +14,11 @@ export default class PhysicsEngine {
   ) {
     world.broadphase = new CANNON.NaiveBroadphase();
     world.allowSleep = true;
+
+    this.world.addBody(table.body);
+    this.world.addBody(ball.body);
+    this.world.addBody(racket1.body);
+    this.world.addBody(racket2.body);
   }
 
   addBody(body: CANNON.Body) {

@@ -1,12 +1,10 @@
 import * as CANNON from 'cannon-es';
-import PhysicsEngine from './PhysicsEngine.js';
 import { SwingType } from '../game.schema.js';
 
 export default class Racket {
   public body: CANNON.Body;
 
   constructor(
-    private engine: PhysicsEngine,
     private playerId: number,
     initPos: CANNON.Vec3,
   ) {
@@ -17,7 +15,6 @@ export default class Racket {
       material,
       position: initPos,
     });
-    engine.addBody(this.body);
   }
 
   updatePosition(x: number) {

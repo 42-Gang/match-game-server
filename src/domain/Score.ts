@@ -11,12 +11,6 @@ export default class Score {
     if (player1score > 11 || player2score > 11) {
       throw new Error('Scores cannot exceed 11');
     }
-    if (player1score === player2score) {
-      throw new Error('Scores cannot be equal');
-    }
-    if (Math.abs(player1score - player2score) < 2) {
-      throw new Error('Score difference must be at least 2');
-    }
   }
 
   toScoreDto(): ScoreDto {
