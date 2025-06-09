@@ -34,9 +34,7 @@ function getMatchServerKey() {
 }
 
 async function configureServer() {
-  await redis.hSet(getMatchServerKey(), {
-    serverName: process.env.SERVER_NAME,
-  });
+  await redis.set(getMatchServerKey(), process.env.SERVER_NAME);
   await redis.expire(getMatchServerKey(), 60 + 10);
 
   heartbeatInterval = setInterval(async () => {
