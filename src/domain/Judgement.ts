@@ -9,4 +9,13 @@ export default class Judgement {
   getCurrentScore(): Score {
     return this.scores.getLatestScore();
   }
+
+  judgeBallPosition(): {
+    // TODO: 탁구대와 공의 위치를 비교하여 승자 결정
+  };
+
+  isGameOver(): boolean {
+    // TODO: 매치 종료 여부 판단
+    return false; // 임시 구현
+  }
 }

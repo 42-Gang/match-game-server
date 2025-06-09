@@ -1,5 +1,4 @@
 import PhysicsEngine from './physics/PhysicsEngine.js';
-import GameResult from './GameResult.js';
 import { playerInputSchema, PlayerInputType, ScoreDto, SessionStateType } from './game.schema.js';
 import Judgement from './Judgement.js';
 
@@ -23,9 +22,8 @@ export default class GameSession {
     }
   }
 
-  tick(): SessionStateType | GameResult {
+  tick(): void {
     this.engine.step(this.dt);
-    return this.getState();
   }
 
   getState(): SessionStateType {
@@ -40,16 +38,14 @@ export default class GameSession {
     };
   }
 
-  // isPointOver(): boolean {
-  //   // 1점이 끝났는지에 대한 로직은 필요에 따라 수정
-  //   // 예시: 점수가 추가된 경우 1점 종료로 간주
-  //   return this.score.hasWinner();
-  // }
+  // TODO: 결과 반환 메서드 구현
+  // getResult(): GameResult {
   //
-  // isGameOver(): boolean {
-  //   // 게임 종료 조건(예: 11점 선취 등)
-  //   return this.score.hasWinner();
   // }
+
+  getMatchId(): number {
+    return this.matchId;
+  }
 
   getScore(): ScoreDto {
     const score = this.judgement.getCurrentScore();
