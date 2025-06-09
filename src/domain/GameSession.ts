@@ -3,16 +3,9 @@ import Ball from './physics/Ball.js';
 import Racket from './physics/Racket.js';
 import Table from './physics/Table.js';
 import Score from './Score.js';
-import Judgement from './Judgement.js';
 import GameResult from './GameResult.js';
 import type { Vec3 } from 'cannon-es';
-import { playerInputSchema, PlayerInputType, swingTypeSchema } from './game.schema.js';
-
-export interface SessionState {
-  ball: Vec3;
-  rackets: Record<string, Vec3>;
-  score: Record<string, number>;
-}
+import { playerInputSchema, PlayerInputType, SessionStateType } from './game.schema.js';
 
 export default class GameSession {
   private readonly dt = 1 / 60;
@@ -45,21 +38,20 @@ export default class GameSession {
     if (input.swing) racket.swing(input.swing);
   }
 
-  tick(): SessionState | GameResult {
+  tick(): SessionStateType | GameResult {
     this.engine.step(this.dt);
     return this.getState();
   }
 
-  getState(): SessionState {
+  getState(): SessionStateType {
     const ballPos = this.ball.body.position;
-    const rackPos: Record<string, Vec3> = {};
-    this.rackets.forEach((r, id) => {
-      rackPos[id] = r.body.position;
-    });
+    const rocket1Pos = this.rocket1.body.position;
+    const rocket2Pos = this.rocket2.body.position;
+
     return {
       ball: ballPos,
-      rackets: rackPos,
-      score: this.score.getPoints(),
+      racket1: rocket1Pos,
+      racket2: rocket2Pos,
     };
   }
 }
