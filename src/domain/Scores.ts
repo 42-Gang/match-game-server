@@ -8,6 +8,9 @@ export default class Scores {
   }
 
   addScore(score: Score): void {
+    if (this.getLatestScore().isGameOver()) {
+      throw new Error('Cannot add score, game is already over');
+    }
     this.scores.push(score);
   }
 

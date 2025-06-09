@@ -17,14 +17,27 @@ export default class Score {
     };
   }
 
+  isGameOver(): boolean {
+    if (this.player1score < 10 && this.player2score < 10) {
+      return false;
+    }
+    if (Math.abs(this.player1score - this.player2score) < 2) {
+      return false;
+    }
+    return true;
+  }
+
   getWinner(): PlayerType {
+    if (!this.isGameOver()) {
+      throw new Error('Game is not over yet');
+    }
+
     if (this.player1score > this.player2score) {
       return playerTypeSchema.enum.PLAYER1;
     }
     if (this.player1score < this.player2score) {
       return playerTypeSchema.enum.PLAYER2;
     }
-
-    throw new Error('No winner yet');
+    throw new Error('Scores are tied, no winner');
   }
 }
