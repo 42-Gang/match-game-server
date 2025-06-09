@@ -4,7 +4,6 @@ import Racket from './physics/Racket.js';
 import Table from './physics/Table.js';
 import Score from './Score.js';
 import GameResult from './GameResult.js';
-import type { Vec3 } from 'cannon-es';
 import { playerInputSchema, PlayerInputType, SessionStateType } from './game.schema.js';
 
 export default class GameSession {
@@ -25,17 +24,22 @@ export default class GameSession {
   applyInput(playerId: number, input: PlayerInputType) {
     playerInputSchema.parse(input);
 
-    let racket;
-    if (this.player1Id === playerId) {
-      racket = this.rocket1;
-    }
-    if (this.player2Id === playerId) {
-      racket = this.rocket2;
-    }
-    if (!racket) return;
+    const racket = this.getRacketByPlayerId(playerId);
 
     racket.updatePosition(input.x);
-    if (input.swing) racket.swing(input.swing);
+    if (input.swing) {
+      racket.swing(input.swing);
+    }
+  }
+
+  private getRacketByPlayerId(playerId: number): Racket {
+    if (this.player1Id === playerId) {
+      return this.rocket1;
+    }
+    if (this.player2Id === playerId) {
+      return this.rocket2;
+    }
+    throw new Error(`Player with ID ${playerId} does not have a racket.`);
   }
 
   tick(): SessionStateType | GameResult {
