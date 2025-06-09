@@ -1,24 +1,39 @@
+import { PlayerType, playerTypeSchema, ScoreType } from './game.schema.js';
+
 export default class Score {
-  private points: Record<string, number> = {};
-
-  constructor(players: string[]) {
-    players.forEach((id) => (this.points[id] = 0));
+  constructor(
+    private readonly player1score: number,
+    private readonly player2score: number,
+  ) {
+    if (player1score < 0 || player2score < 0) {
+      throw new Error('Scores cannot be negative');
+    }
+    if (player1score > 11 || player2score > 11) {
+      throw new Error('Scores cannot exceed 11');
+    }
+    if (player1score === player2score) {
+      throw new Error('Scores cannot be equal');
+    }
+    if (Math.abs(player1score - player2score) < 2) {
+      throw new Error('Score difference must be at least 2');
+    }
   }
 
-  addPoint(playerId: string) {
-    this.points[playerId] = (this.points[playerId] || 0) + 1;
+  getPoints(): ScoreType {
+    return {
+      player1score: this.player1score,
+      player2score: this.player2score,
+    };
   }
 
-  getPoints(): Record<string, number> {
-    return { ...this.points };
-  }
+  getWinner(): PlayerType {
+    if (this.player1score > this.player2score) {
+      return playerTypeSchema.enum.PLAYER1;
+    }
+    if (this.player1score < this.player2score) {
+      return playerTypeSchema.enum.PLAYER2;
+    }
 
-  hasWinner(): boolean {
-    return Object.values(this.points).some((p) => p >= 11);
-  }
-
-  getWinner(): string | null {
-    const winner = Object.entries(this.points).find(([_, p]) => p >= 11);
-    return winner ? winner[0] : null;
+    throw new Error('No winner yet');
   }
 }
