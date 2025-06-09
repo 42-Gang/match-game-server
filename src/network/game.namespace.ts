@@ -1,5 +1,5 @@
 import { Namespace, Socket } from 'socket.io';
-import { socketMiddleware } from '../utils/middleware.js';
+import { socketMiddleware } from './utils/middleware.js';
 
 export function startGameNamespace(namespace: Namespace) {
   namespace.use(socketMiddleware);

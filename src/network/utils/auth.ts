@@ -1,4 +1,4 @@
-import { gotClient } from '../../plugins/http.client.js';
+import { gotClient } from '../../infra/http.client.js';
 import { UnAuthorizedException } from '../../common/exceptions/core.error.js';
 
 export async function verifyAccessToken(token: string): Promise<{

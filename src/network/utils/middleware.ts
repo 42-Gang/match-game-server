@@ -1,7 +1,7 @@
 import { BadRequestException, UnAuthorizedException } from '../../common/exceptions/core.error.js';
 import { Socket } from 'socket.io';
 import { verifyAccessToken } from './auth.js';
-import { logger } from '../../plugins/logger.js';
+import { logger } from '../../infra/logger.js';
 
 type NextFunction = (err?: Error) => void;
 
