@@ -1,13 +1,12 @@
 import PhysicsEngine from './physics/PhysicsEngine.js';
 import Ball from './physics/Ball.js';
-import Racket, { SwingType } from './physics/Racket.js';
+import Racket from './physics/Racket.js';
 import Table from './physics/Table.js';
-import Player, { PlayerInput } from './Player.js';
 import Score from './Score.js';
 import Judgement from './Judgement.js';
 import GameResult from './GameResult.js';
 import type { Vec3 } from 'cannon-es';
-import Players from './Players.js';
+import { playerInputSchema, PlayerInputType } from './game.schema.js';
 
 export interface SessionState {
   ball: Vec3;
@@ -25,15 +24,16 @@ export default class GameSession {
     private readonly table: Table,
     private readonly rackets: Map<string, Racket>,
     private readonly score: Score,
-    private readonly judgement: Judgement,
   ) {}
 
-  applyInput(playerId: string, input: PlayerInput) {
+  applyInput(playerId: string, input: PlayerInputType) {
+    playerInputSchema.parse(input);
+
     const racket = this.rackets.get(playerId);
     if (!racket) return;
     racket.updatePosition(input.x);
-    if (input.swing === 'LEFT') racket.swing('BACKSWING');
-    else if (input.swing === 'RIGHT') racket.swing('DRIVE');
+    if (input.swing === 'BACKSWING') racket.swing(input.swing);
+    else if (input.swing === 'DRIVE') racket.swing(input.swing);
   }
 
   tick(): SessionState | GameResult {
