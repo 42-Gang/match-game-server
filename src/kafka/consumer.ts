@@ -2,9 +2,10 @@ import { kafka } from '../plugins/kafka.js';
 import { KafkaTopicConsumer } from './consumers/kafka.topic.consumer.js';
 import pino from 'pino';
 import BaseLogger = pino.BaseLogger;
+import process from 'node:process';
 
 export async function startConsumer(topicConsumers: KafkaTopicConsumer[], logger: BaseLogger) {
-  const consumer = kafka.consumer({ groupId: 'MATCH_GAME_SERVER', sessionTimeout: 10000 }); // Adjust groupId as needed
+  const consumer = kafka.consumer({ groupId: process.env.SERVER_NAME, sessionTimeout: 10000 }); // Adjust groupId as needed
   await consumer.connect();
 
   for (const topicConsumer of topicConsumers) {

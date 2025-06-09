@@ -12,13 +12,14 @@ import BaseLogger = pino.BaseLogger;
 import { setDiContainer } from './plugins/container.js';
 
 let heartbeatInterval: NodeJS.Timeout;
+const REDIS_HEARTBEAT_TTL_SECONDS = 60 + 10;
 
 function registerSocketServer(diContainer: AwilixContainer) {
   const httpServer = createServer();
   const io = new SocketIOServer(httpServer);
   io.logger = logger;
-  io.diContainer = diContainer;
 
+  io.diContainer = diContainer;
   registerSocketGateway(diContainer, io);
   return { httpServer, io };
 }
@@ -35,11 +36,11 @@ function getMatchServerKey() {
 
 async function configureServer() {
   await redis.set(getMatchServerKey(), process.env.SERVER_NAME);
-  await redis.expire(getMatchServerKey(), 60 + 10);
+  await redis.expire(getMatchServerKey(), REDIS_HEARTBEAT_TTL_SECONDS);
 
   heartbeatInterval = setInterval(async () => {
     logger.info('Match Server Heartbeat');
-    await redis.expire(getMatchServerKey(), 60 + 10);
+    await redis.expire(getMatchServerKey(), REDIS_HEARTBEAT_TTL_SECONDS);
   }, 60 * 1000);
 }
 
