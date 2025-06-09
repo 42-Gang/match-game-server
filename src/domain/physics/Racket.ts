@@ -7,6 +7,7 @@ export default class Racket {
 
   constructor(
     private engine: PhysicsEngine,
+    private playerId: number,
     initPos: CANNON.Vec3,
   ) {
     const material = new CANNON.Material('racketMaterial');
@@ -25,5 +26,9 @@ export default class Racket {
 
   swing(type: SwingType) {
     // TODO: swing 시 공과의 충돌 시 반발 속도 계산 로직 연결
+  }
+
+  getPlayerId(): number {
+    return this.playerId;
   }
 }
