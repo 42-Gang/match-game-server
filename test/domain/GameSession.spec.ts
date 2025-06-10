@@ -1,5 +1,5 @@
 import GameSession from '../../src/domain/GameSession.js';
-import PhysicsEngine from '../../src/domain/physics/PhysicsEngine.js';
+import GameSpace from '../../src/domain/physics/GameSpace.js';
 import * as CANNON from 'cannon-es';
 import Ball from '../../src/domain/physics/Ball.js';
 import Table from '../../src/domain/physics/Table.js';
@@ -16,7 +16,7 @@ beforeEach(() => {
   const racket1 = new Racket(1, new CANNON.Vec3(-0.5, 0.2, 0));
   const racket2 = new Racket(2, new CANNON.Vec3(0.5, 0.2, 0));
 
-  const physicsEngine = new PhysicsEngine(world, ball, table, racket1, racket2);
+  const physicsEngine = new GameSpace(world, ball, table, racket1, racket2);
   const scores = new Scores();
   const judgement = new Judgement(scores);
 

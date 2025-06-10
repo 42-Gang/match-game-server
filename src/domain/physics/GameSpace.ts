@@ -4,7 +4,7 @@ import Table from './Table.js';
 import Racket from './Racket.js';
 import { SwingType } from '../game.schema.js';
 
-export default class PhysicsEngine {
+export default class GameSpace {
   constructor(
     private world: CANNON.World = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) }),
     private readonly ball: Ball,

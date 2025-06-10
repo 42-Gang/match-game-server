@@ -1,4 +1,4 @@
-import PhysicsEngine from './physics/PhysicsEngine.js';
+import GameSpace from './physics/GameSpace.js';
 import { playerInputSchema, PlayerInputType, ScoreDto, SessionStateType } from './game.schema.js';
 import Judgement from './Judgement.js';
 import Players from './Players.js';
@@ -8,7 +8,7 @@ export default class GameSession {
 
   constructor(
     private readonly matchId: number,
-    private readonly engine: PhysicsEngine,
+    private readonly engine: GameSpace,
     private readonly players: Players,
     private readonly judgement: Judgement,
   ) {}
@@ -29,7 +29,7 @@ export default class GameSession {
     // 볼 위치를 판정하고, 득점이 있으면 볼을 리셋합니다.
     const winner = this.judgement.judgeBallPosition(this.getState());
     if (winner) {
-      // PhysicsEngine 쪽에 reset 메서드가 있다면 호출해주세요.
+      // GameSpace 쪽에 reset 메서드가 있다면 호출해주세요.
       // 예: this.engine.resetBall();
     }
   }
