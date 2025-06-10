@@ -5,20 +5,33 @@ import Racket from './Racket.js';
 import { SwingType } from '../game.schema.js';
 
 export default class GameSpace {
+  private readonly world: CANNON.World = new CANNON.World({
+    gravity: new CANNON.Vec3(0, -9.81, 0),
+  });
+
   constructor(
-    private world: CANNON.World = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) }),
     private readonly ball: Ball,
     private readonly table: Table,
     private readonly racket1: Racket,
     private readonly racket2: Racket,
   ) {
-    world.broadphase = new CANNON.NaiveBroadphase();
-    world.allowSleep = true;
+    // private world: CANNON.World = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) }),
+    this.world.broadphase = new CANNON.NaiveBroadphase();
+    this.world.allowSleep = true;
 
     this.world.addBody(table.body);
     this.world.addBody(ball.body);
-    this.world.addBody(racket1.body);
-    this.world.addBody(racket2.body);
+
+    const tableMat = table.body.material;
+    const ballMat = ball.body.material;
+
+    this.world.gravity.set(0, -9.81, 0); // ← 이 한 줄 추가!
+
+    const contactMaterial = new CANNON.ContactMaterial(ballMat, tableMat, {
+      restitution: 0.9, // 0 = 탄성 없음, 1 = 완전 탄성 충돌
+      friction: 0.1,
+    });
+    this.world.addContactMaterial(contactMaterial);
   }
 
   addBody(body: CANNON.Body) {

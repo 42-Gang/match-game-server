@@ -2,19 +2,18 @@ import * as CANNON from 'cannon-es';
 
 export default class Table {
   public body: CANNON.Body;
-  static LENGTH: number = 2.74;
 
   constructor(
-    x: number = 1.37, // 1370mm
-    y: number = 0.015, // 15mm
-    z: number = 2.74, // 2740mm
+    halfWidth = 1.525 / 2, // 0.7625m
+    halfThickness = 1, // 상판 두께
+    halfLength = 2.74 / 2, // 1.37m
   ) {
     const material = new CANNON.Material('tableMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.STATIC,
-      shape: new CANNON.Box(new CANNON.Vec3(x, y, z)), // 2740×1525mm
+      shape: new CANNON.Box(new CANNON.Vec3(halfWidth, halfThickness, halfLength)),
       material,
     });
-    this.body.position.set(0, 0, 0);
+    this.body.position.set(0, 0.76 - halfThickness, 0); // 상판 중심이 높이 0.76m에 오도록
   }
 }
