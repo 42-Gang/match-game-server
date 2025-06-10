@@ -17,4 +17,12 @@ export default class Table {
     });
     this.body.position.set(0, 0, 0);
   }
+
+  getWidth(): number {
+    return this.body.shapes[0].halfExtents.x * 2; // 1370mm
+  }
+
+  getHeight(): number {
+    return this.body.shapes[0].halfExtents.y * 2; // 15mm
+  }
 }

@@ -27,6 +27,14 @@ export default class PhysicsEngine {
 
   step(dt: number) {
     this.world.step(dt);
+
+    // 공과 테이블의 충돌 감지 (간단한 y좌표 비교)
+    const ballY = this.ball.body.position.y;
+    const tableY = this.table.body.position.y + this.table.getHeight() / 2;
+    // 공이 테이블 위에 닿았다고 판단 (충분히 가까워졌을 때)
+    if (!this.ball.hasTouchedTable() && Math.abs(ballY - tableY) < 0.025) {
+      this.ball.markTableTouched();
+    }
   }
 
   getBallPosition(): CANNON.Vec3 {
@@ -49,6 +57,13 @@ export default class PhysicsEngine {
   swingRacket(playerId: number, swingType: SwingType) {
     const racket = this.getRacketByPlayerId(playerId);
     racket.swing(swingType);
+  }
+
+  getTableSize(): { width: number; height: number } {
+    return {
+      width: this.table.getWidth(),
+      height: this.table.getHeight(),
+    };
   }
 
   private getRacketByPlayerId(playerId: number): Racket {

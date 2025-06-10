@@ -23,32 +23,30 @@ export default class GameSession {
   }
 
   tick(): void {
+    // 물리 엔진을 한 스텝 진행합니다.
     this.engine.step(this.dt);
+
+    // 볼 위치를 판정하고, 득점이 있으면 볼을 리셋합니다.
+    const winner = this.judgement.judgeBallPosition(this.getState());
+    if (winner) {
+      // PhysicsEngine 쪽에 reset 메서드가 있다면 호출해주세요.
+      // 예: this.engine.resetBall();
+    }
   }
 
   getState(): SessionStateType {
-    const ballPos = this.engine.getBallPosition();
-    const rocket1Pos = this.engine.getRacket1Position();
-    const rocket2Pos = this.engine.getRacket2Position();
-
     return {
-      ball: ballPos,
-      racket1: rocket1Pos,
-      racket2: rocket2Pos,
+      ball: this.engine.getBallPosition(),
+      racket1: this.engine.getRacket1Position(),
+      racket2: this.engine.getRacket2Position(),
     };
   }
-
-  // TODO: 결과 반환 메서드 구현
-  // getResult(): GameResult {
-  //
-  // }
 
   getMatchId(): number {
     return this.matchId;
   }
 
   getScore(): ScoreDto {
-    const score = this.judgement.getCurrentScore();
-    return score.toScoreDto();
+    return this.judgement.getCurrentScore().toScoreDto();
   }
 }
