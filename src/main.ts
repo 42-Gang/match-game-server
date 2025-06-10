@@ -6,8 +6,8 @@ import { logger } from './infra/logger.js';
 import { redis } from './infra/redis.js';
 import { setDiContainer } from './infra/container.js';
 import { startConsumer } from './infra/kafka/consumer.js';
-import { registerSocketGateway } from './network/gateway.js';
 import type { BaseLogger } from 'pino';
+import { registerSocket } from './network/socket.js';
 
 const PORT = Number(process.env.PORT) || 8080;
 const MATCH_KEY = `match-server:${process.env.SERVER_NAME}`;
@@ -75,7 +75,7 @@ async function init() {
   });
   io.logger = logger as BaseLogger;
   io.diContainer = di;
-  registerSocketGateway(di, io);
+  registerSocket(di, io);
 
   await startHeartbeat();
   setCloseWithGrace(io);
