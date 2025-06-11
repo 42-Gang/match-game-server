@@ -28,13 +28,7 @@ export default class Racket {
     const worldX = ny * 2.3;
     let worldZ = (nx - 0.5) * 2 * Racket.HALF_WIDTH;
     console.log(`worldZ: ${worldZ}, delta: ${(ny - 1) * (nx - 0.5)}`);
-    if (nx - 0.5 < 0) {
-      worldZ -= (ny - 1) * (nx - 0.5);
-      console.log('Adjusting worldZ for negative nx');
-    } else {
-      console.log('Adjusting worldZ for positive nx');
-      worldZ -= (ny - 1) * (nx - 0.5);
-    }
+    worldZ -= (ny - 1) * (nx - 0.5);
 
     console.log(
       `Screen position: (${screenX}, ${screenY}) -> World position: (${worldX}, ${this.body.position.y}, ${worldZ})`,

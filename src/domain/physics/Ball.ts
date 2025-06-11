@@ -17,7 +17,7 @@ export default class Ball {
   }
 
   reset() {
-    this.body.position.set(0, 1.5, 0); // x=0, y=0.8m, z=0 (탁구대 중앙 상공)
+    this.body.position.set(0.7, 1.5, 0); // x=0, y=0.8m, z=0 (탁구대 중앙 상공)
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
 
