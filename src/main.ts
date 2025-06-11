@@ -53,7 +53,8 @@ async function registerKafkaConsumer(diContainer: AwilixContainer) {
       injectionMode: 'CLASSIC',
     }),
   });
-  await diContainer.resolve('kafkaConsumer');
+  diContainer.resolve('kafkaConsumer');
+  // await diContainer.resolve('kafkaConsumer');
 }
 
 async function startHeartbeat() {
