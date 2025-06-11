@@ -6,6 +6,7 @@ import Table from '../domain/physics/Table.js';
 import Racket from '../domain/physics/Racket.js';
 import CANNON from 'cannon-es';
 import GameSpace from '../domain/physics/GameSpace.js';
+import { playerTypeSchema } from '../domain/game.schema.js';
 
 export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
   io.use(socketMiddleware);
@@ -20,8 +21,8 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
 
     const ball = new Ball();
     const table = new Table();
-    const racket1 = new Racket(1, new CANNON.Vec3(-0.5, 0.2, 0));
-    const racket2 = new Racket(2, new CANNON.Vec3(0.5, 0.2, 0));
+    const racket1 = new Racket(playerTypeSchema.enum.PLAYER1, new CANNON.Vec3(-0.5, 1, 0));
+    const racket2 = new Racket(playerTypeSchema.enum.PLAYER2, new CANNON.Vec3(0.5, 1, 0));
     const gameSpace = new GameSpace(ball, table, racket1, racket2);
 
     const fixedTimeStep = 1 / 60; // 60Hz
@@ -30,9 +31,12 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     const timer = setInterval(() => {
       gameSpace.step(fixedTimeStep);
 
-      socket.emit('game:update', {
+      const message = {
         ball: gameSpace.getBallPosition(),
-      });
+        racket1: gameSpace.getRacket1Position(),
+      };
+      // logger.info(message, `Emitting game update:`);
+      socket.emit('game:update', message);
 
       // 공이 바닥에 닿으면 루프 종료
       if (ball.body.position.y <= 0) {
@@ -40,5 +44,10 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
         // 필요하면 여기서 플레이어에게 결과 전송
       }
     }, intervalMs);
+
+    socket.on('racket:update', (data) => {
+      const { player, x, y } = data;
+      gameSpace.updateRocketPosition(player, x, y);
+    });
   });
 };

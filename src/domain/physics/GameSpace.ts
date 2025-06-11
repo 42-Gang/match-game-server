@@ -2,7 +2,7 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table from './Table.js';
 import Racket from './Racket.js';
-import { SwingType } from '../game.schema.js';
+import { PlayerType, SwingType } from '../game.schema.js';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -47,31 +47,31 @@ export default class GameSpace {
   }
 
   getRacket1Position(): CANNON.Vec3 {
-    return this.racket1.body.position.clone();
+    return this.racket1.getPosition();
   }
 
   getRacket2Position(): CANNON.Vec3 {
     return this.racket2.body.position.clone();
   }
 
-  updateRocketPosition(playerId: number, x: number) {
-    const racket = this.getRacketByPlayerId(playerId);
-    racket.updatePosition(x);
+  updateRocketPosition(player: PlayerType, x: number, y: number) {
+    const racket = this.getRacketByPlayerId(player);
+    racket.updatePosition(x, y);
   }
 
-  swingRacket(playerId: number, swingType: SwingType) {
-    const racket = this.getRacketByPlayerId(playerId);
+  swingRacket(player: PlayerType, swingType: SwingType) {
+    const racket = this.getRacketByPlayerId(player);
     racket.swing(swingType);
   }
 
-  private getRacketByPlayerId(playerId: number): Racket {
-    if (this.racket1.getPlayerId() === playerId) {
+  private getRacketByPlayerId(player: PlayerType): Racket {
+    if (this.racket1.getPlayer() === player) {
       return this.racket1;
     }
-    if (this.racket2.getPlayerId() === playerId) {
+    if (this.racket2.getPlayer() === player) {
       return this.racket2;
     }
 
-    throw new Error(`Player with ID ${playerId} does not have a racket.`);
+    throw new Error(`Player with ID ${player} does not have a racket.`);
   }
 }
