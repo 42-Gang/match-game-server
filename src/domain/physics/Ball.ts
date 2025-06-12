@@ -9,8 +9,8 @@ export default class Ball {
   constructor() {
     const material = new CANNON.Material('ballMaterial');
     this.body = new CANNON.Body({
-      mass: 0.1127, // 약 2.7g
-      shape: new CANNON.Sphere(0.1), // 반지름 20mm
+      mass: 0.0027,
+      shape: new CANNON.Sphere(0.2), // 반지름 20mm
       material,
     });
     this.reset();
@@ -39,5 +39,9 @@ export default class Ball {
 
   hasTouchedTable(): boolean {
     return this.touchedTable;
+  }
+
+  getPosition(): CANNON.Vec3 {
+    return this.body.position.clone();
   }
 }

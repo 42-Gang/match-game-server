@@ -35,8 +35,8 @@ export default class GameSpace {
       friction: 0.1,
     });
     const racketContactMaterial = new CANNON.ContactMaterial(ballMat, racket1Mat, {
-      restitution: 0.1,
-      friction: 0.8,
+      restitution: 0.2,
+      friction: 0.1,
     });
     this.world.addContactMaterial(contactMaterial);
     this.world.addContactMaterial(racketContactMaterial);
@@ -77,7 +77,6 @@ export default class GameSpace {
 
   swingRacket(player: PlayerType, swingType: SwingType) {
     const racket = this.getRacketByPlayerId(player);
-    racket.swing(swingType);
   }
 
   private getRacketByPlayerId(player: PlayerType): Racket {

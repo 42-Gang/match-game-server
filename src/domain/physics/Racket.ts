@@ -15,14 +15,15 @@ export default class Racket {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
-      shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.15, 0.15)),
+      shape: new CANNON.Box(new CANNON.Vec3(0.025, 0.15, 0.15)),
       material,
+      mass: 0.1, // 가벼운 라켓
       position: initPos,
     });
-    this.body.position.set(0, 0.79, 0);
+    this.body.position.set(1.8, 0.8, 0);
 
-    const tiltAngle = 15 * Math.PI;
-    const xAxis = new CANNON.Vec3(0, 0, -1);
+    const tiltAngle = 45 * Math.PI;
+    const xAxis = new CANNON.Vec3(0, 0, 1);
     this.body.quaternion.setFromAxisAngle(xAxis, tiltAngle);
   }
 
@@ -33,10 +34,13 @@ export default class Racket {
     const delta = targetPos.vsub(this.body.position);
     // 3) 프레임 시간(dt)에 맞춘 속도
     const dt = 1 / 60; // 예시
-    const desiredVel = delta.scale(1 / dt);
+
+    // const desiredVel = delta.scale(1 / dt);
+    const speedScale = 0.3; // 0~1 사이 값으로 속도 비율 조절
+    const desiredVel = delta.scale(speedScale / dt);
 
     // 4) (선택) 최대 속도 제한
-    const maxSpeed = 10;
+    const maxSpeed = 5;
     const speed = desiredVel.length();
     if (speed > maxSpeed) {
       desiredVel.scale(maxSpeed / speed, desiredVel);
@@ -75,10 +79,6 @@ export default class Racket {
     // 물리 바디 위치 업데이트
     this.body.position.x = worldX;
     this.body.position.z = worldZ;
-  }
-
-  swing(type: SwingType) {
-    // TODO: swing 시 공과의 충돌 시 반발 속도 계산 로직 연결
   }
 
   getPlayer(): PlayerType {
