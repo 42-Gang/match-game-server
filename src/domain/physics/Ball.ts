@@ -10,7 +10,7 @@ export default class Ball {
     const material = new CANNON.Material('ballMaterial');
     this.body = new CANNON.Body({
       mass: 0.0027,
-      shape: new CANNON.Sphere(0.2), // 반지름 20mm
+      shape: new CANNON.Sphere(0.1), // 10cm 지름
       material,
     });
     this.reset();
