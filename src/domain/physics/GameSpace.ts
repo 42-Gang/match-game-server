@@ -15,14 +15,12 @@ export default class GameSpace {
     private readonly racket1: Racket,
     private readonly racket2: Racket,
   ) {
-    // private world: CANNON.World = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.81, 0) }),
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
 
     this.world.addBody(table.body);
     this.world.addBody(ball.body);
     this.world.addBody(racket1.body);
-    // this.world.addBody(racket2.body);
 
     const tableMat = table.body.material;
     const ballMat = ball.body.material;
@@ -73,10 +71,6 @@ export default class GameSpace {
       x = 0;
     }
     racket.updatePositionTest(x, y, z);
-  }
-
-  swingRacket(player: PlayerType, swingType: SwingType) {
-    const racket = this.getRacketByPlayerId(player);
   }
 
   private getRacketByPlayerId(player: PlayerType): Racket {

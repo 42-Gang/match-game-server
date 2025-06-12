@@ -24,24 +24,4 @@ export default class Ball {
     this.lastHitPlayer = null;
     this.touchedTable = false;
   }
-
-  setLastHitPlayer(player: PlayerType): void {
-    this.lastHitPlayer = player;
-  }
-
-  getLastHitPlayer(): PlayerType | null {
-    return this.lastHitPlayer;
-  }
-
-  markTableTouched(): void {
-    this.touchedTable = true;
-  }
-
-  hasTouchedTable(): boolean {
-    return this.touchedTable;
-  }
-
-  getPosition(): CANNON.Vec3 {
-    return this.body.position.clone();
-  }
 }
