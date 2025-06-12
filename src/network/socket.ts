@@ -46,8 +46,9 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     }, intervalMs);
 
     socket.on('racket:update', (data) => {
-      const { player, x, y } = data;
-      gameSpace.updateRocketPosition(player, x, y);
+      const { x, y, z } = data;
+      console.log(`Racket update received: x=${x}, y=${y}, z=${z}`);
+      gameSpace.updateRacket1Position(playerTypeSchema.enum.PLAYER1, x, y, z);
     });
   });
 };

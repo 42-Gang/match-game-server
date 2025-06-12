@@ -21,9 +21,12 @@ export default class GameSpace {
 
     this.world.addBody(table.body);
     this.world.addBody(ball.body);
+    this.world.addBody(racket1.body);
+    // this.world.addBody(racket2.body);
 
     const tableMat = table.body.material;
     const ballMat = ball.body.material;
+    const racket1Mat = racket1.body.material;
 
     this.world.gravity.set(0, -9.81, 0); // ← 이 한 줄 추가!
 
@@ -31,7 +34,12 @@ export default class GameSpace {
       restitution: 0.9, // 0 = 탄성 없음, 1 = 완전 탄성 충돌
       friction: 0.1,
     });
+    const racketContactMaterial = new CANNON.ContactMaterial(ballMat, racket1Mat, {
+      restitution: 0.1,
+      friction: 0.8,
+    });
     this.world.addContactMaterial(contactMaterial);
+    this.world.addContactMaterial(racketContactMaterial);
   }
 
   addBody(body: CANNON.Body) {
@@ -39,7 +47,7 @@ export default class GameSpace {
   }
 
   step(dt: number) {
-    this.world.step(dt);
+    this.world.step(dt, dt, 10);
   }
 
   getBallPosition(): CANNON.Vec3 {
@@ -57,6 +65,14 @@ export default class GameSpace {
   updateRocketPosition(player: PlayerType, x: number, y: number) {
     const racket = this.getRacketByPlayerId(player);
     racket.updatePosition(x, y);
+  }
+
+  updateRacket1Position(player: PlayerType, x: number, y: number, z: number) {
+    const racket = this.getRacketByPlayerId(player);
+    if (x < 0) {
+      x = 0;
+    }
+    racket.updatePositionTest(x, y, z);
   }
 
   swingRacket(player: PlayerType, swingType: SwingType) {
