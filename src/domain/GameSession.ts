@@ -1,6 +1,5 @@
 import GameSpace from './physics/GameSpace.js';
-import { playerInputSchema, PlayerInputType, ScoreDto, SessionStateType } from './game.schema.js';
-import Judgement from './Judgement.js';
+import { ScoreDto, SessionStateType } from './game.schema.js';
 import Players from './Players.js';
 
 export default class GameSession {
@@ -10,28 +9,11 @@ export default class GameSession {
     private readonly matchId: number,
     private readonly engine: GameSpace,
     private readonly players: Players,
-    private readonly judgement: Judgement,
   ) {}
-
-  applyInput(playerId: number, input: PlayerInputType) {
-    playerInputSchema.parse(input);
-
-    this.engine.updateRocketPosition(playerId, input.x);
-    if (input.swing) {
-      this.engine.swingRacket(playerId, input.swing);
-    }
-  }
 
   tick(): void {
     // 물리 엔진을 한 스텝 진행합니다.
     this.engine.step(this.dt);
-
-    // 볼 위치를 판정하고, 득점이 있으면 볼을 리셋합니다.
-    const winner = this.judgement.judgeBallPosition(this.getState());
-    if (winner) {
-      // GameSpace 쪽에 reset 메서드가 있다면 호출해주세요.
-      // 예: this.engine.resetBall();
-    }
   }
 
   getState(): SessionStateType {
@@ -44,9 +26,5 @@ export default class GameSession {
 
   getMatchId(): number {
     return this.matchId;
-  }
-
-  getScore(): ScoreDto {
-    return this.judgement.getCurrentScore().toScoreDto();
   }
 }
