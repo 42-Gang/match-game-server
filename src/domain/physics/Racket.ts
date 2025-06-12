@@ -18,7 +18,7 @@ export default class Racket {
     });
     this.body.position.set(1.8, 0.8, 0);
 
-    const tiltAngle = 45 * Math.PI;
+    const tiltAngle = 20 * Math.PI;
     const xAxis = new CANNON.Vec3(0, 0, 1);
     this.body.quaternion.setFromAxisAngle(xAxis, tiltAngle);
   }
