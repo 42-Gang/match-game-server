@@ -4,17 +4,13 @@ import { PlayerType } from '../game.schema.js';
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(
-    private player: PlayerType,
-    initPos: CANNON.Vec3,
-  ) {
+  constructor(private player: PlayerType) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
       shape: new CANNON.Box(new CANNON.Vec3(0.025, 0.15, 0.15)),
       material,
       mass: 0.1, // 가벼운 라켓
-      position: initPos,
     });
     this.body.position.set(1.8, 0.8, 0);
 

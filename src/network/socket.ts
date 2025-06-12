@@ -4,7 +4,6 @@ import { socketMiddleware } from './utils/middleware.js';
 import Ball from '../domain/physics/Ball.js';
 import Table from '../domain/physics/Table.js';
 import Racket from '../domain/physics/Racket.js';
-import CANNON from 'cannon-es';
 import GameSpace from '../domain/physics/GameSpace.js';
 import { playerTypeSchema } from '../domain/game.schema.js';
 import { matchMiddleware } from './match.middleware.js';
@@ -12,8 +11,8 @@ import { matchMiddleware } from './match.middleware.js';
 function createGameSpace() {
   const ball = new Ball();
   const table = new Table();
-  const racket1 = new Racket(playerTypeSchema.enum.PLAYER1, new CANNON.Vec3(-0.5, 1, 0));
-  const racket2 = new Racket(playerTypeSchema.enum.PLAYER2, new CANNON.Vec3(0.5, 1, 0));
+  const racket1 = new Racket(playerTypeSchema.enum.PLAYER1);
+  const racket2 = new Racket(playerTypeSchema.enum.PLAYER2);
   return new GameSpace(ball, table, racket1, racket2);
 }
 
