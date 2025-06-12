@@ -4,9 +4,9 @@ export default class Table {
   public body: CANNON.Body;
 
   constructor(
-    halfWidth = 1.525 / 2, // 0.7625m
+    halfWidth = 1.5 / 2, // 0.7625m
     halfThickness = 0.5, // 상판 두께
-    halfLength = 2.74 / 2, // 1.37m
+    halfLength = 3 / 2, // 1.37m
   ) {
     const material = new CANNON.Material('tableMaterial');
     this.body = new CANNON.Body({
