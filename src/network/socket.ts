@@ -8,6 +8,14 @@ import CANNON from 'cannon-es';
 import GameSpace from '../domain/physics/GameSpace.js';
 import { playerTypeSchema } from '../domain/game.schema.js';
 
+function createGameSpace() {
+  const ball = new Ball();
+  const table = new Table();
+  const racket1 = new Racket(playerTypeSchema.enum.PLAYER1, new CANNON.Vec3(-0.5, 1, 0));
+  const racket2 = new Racket(playerTypeSchema.enum.PLAYER2, new CANNON.Vec3(0.5, 1, 0));
+  return new GameSpace(ball, table, racket1, racket2);
+}
+
 export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
   io.use(socketMiddleware);
 
@@ -15,18 +23,14 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     socket: asValue(io),
   });
 
+  const fixedTimeStep = 1 / 60; // 60Hz
+  const intervalMs = fixedTimeStep * 1000;
+
   io.on('connection', (socket) => {
     const logger = io.logger;
     logger.info(`New connection: ${socket.id} from user ${socket.data.userId}`);
 
-    const ball = new Ball();
-    const table = new Table();
-    const racket1 = new Racket(playerTypeSchema.enum.PLAYER1, new CANNON.Vec3(-0.5, 1, 0));
-    const racket2 = new Racket(playerTypeSchema.enum.PLAYER2, new CANNON.Vec3(0.5, 1, 0));
-    const gameSpace = new GameSpace(ball, table, racket1, racket2);
-
-    const fixedTimeStep = 1 / 60; // 60Hz
-    const intervalMs = fixedTimeStep * 1000;
+    const gameSpace = createGameSpace();
 
     const timer = setInterval(() => {
       gameSpace.step(fixedTimeStep);
@@ -39,7 +43,7 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
       socket.emit('game:update', message);
 
       // 공이 바닥에 닿으면 루프 종료
-      if (ball.body.position.y <= 0) {
+      if (gameSpace.getBallPosition().y <= 0) {
         clearInterval(timer);
         // 필요하면 여기서 플레이어에게 결과 전송
       }

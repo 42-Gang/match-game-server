@@ -2,7 +2,7 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table from './Table.js';
 import Racket from './Racket.js';
-import { PlayerType, SwingType } from '../game.schema.js';
+import { PlayerType } from '../game.schema.js';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -58,11 +58,6 @@ export default class GameSpace {
 
   getRacket2Position(): CANNON.Vec3 {
     return this.racket2.body.position.clone();
-  }
-
-  updateRocketPosition(player: PlayerType, x: number, y: number) {
-    const racket = this.getRacketByPlayerId(player);
-    racket.updatePosition(x, y);
   }
 
   updateRacket1Position(player: PlayerType, x: number, y: number, z: number) {
