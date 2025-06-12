@@ -7,6 +7,7 @@ import Racket from '../domain/physics/Racket.js';
 import CANNON from 'cannon-es';
 import GameSpace from '../domain/physics/GameSpace.js';
 import { playerTypeSchema } from '../domain/game.schema.js';
+import { matchMiddleware } from './match.middleware.js';
 
 function createGameSpace() {
   const ball = new Ball();
@@ -18,6 +19,7 @@ function createGameSpace() {
 
 export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
   io.use(socketMiddleware);
+  io.use(matchMiddleware);
 
   diContainer.register({
     socket: asValue(io),
