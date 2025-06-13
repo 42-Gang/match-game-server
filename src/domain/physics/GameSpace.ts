@@ -58,12 +58,15 @@ export default class GameSpace {
     return this.racket2.body.position.clone();
   }
 
+  clamp(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(value, max));
+  }
+
   updateRacket1Position(player: PlayerType, x: number, y: number, z: number) {
     const racket = this.getRacketByPlayerId(player);
-    if (x < 0) {
-      x = 0;
-    }
-    racket.updatePositionTest(x, y, z);
+    const clampedX = this.clamp(x, 0, 2);
+    const clampedZ = this.clamp(z, -1.5, 1.5);
+    racket.updatePositionTest(clampedX, y, clampedZ);
   }
 
   private getRacketByPlayerId(player: PlayerType): Racket {
