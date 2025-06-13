@@ -4,6 +4,7 @@ import Table from './physics/Table.js';
 import Racket from './physics/Racket.js';
 import { Server } from 'socket.io';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
+import { playerTypeSchema } from './game.schema.js';
 
 export default class GameSession {
   private readonly gameSpaces: Map<number, GameSpace>;
@@ -43,8 +44,8 @@ export default class GameSession {
 
     const ball = new Ball();
     const table = new Table();
-    const racket1 = new Racket(input.player1Id);
-    const racket2 = new Racket(input.player2Id);
+    const racket1 = new Racket(input.player1Id, playerTypeSchema.enum.PLAYER1);
+    const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER1);
     const gameSpace = new GameSpace(ball, table, racket1, racket2);
 
     this.gameSpaces.set(input.matchId, gameSpace);
