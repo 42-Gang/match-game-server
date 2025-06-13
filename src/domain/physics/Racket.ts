@@ -16,8 +16,8 @@ export default class Racket {
     });
     this.body.sleepState = CANNON.Body.AWAKE;
 
-    if (playerType === playerTypeSchema.enum.PLAYER1) this.body.position.set(1.8, 0.8, 0);
-    if (playerType === playerTypeSchema.enum.PLAYER2) this.body.position.set(-1.8, 0.8, 0);
+    // if (playerType === playerTypeSchema.enum.PLAYER1) this.body.position.set(1.8, 0.8, 0);
+    // if (playerType === playerTypeSchema.enum.PLAYER2) this.body.position.set(-1.8, 0.8, 0);
 
     const tiltAngle = 20 * Math.PI;
     const xAxis = new CANNON.Vec3(0, 0, -1);
