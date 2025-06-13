@@ -26,8 +26,6 @@ export default class GameSpace {
     const ballMat = ball.body.material;
     const racket1Mat = racket1.body.material;
 
-    this.world.gravity.set(0, -9.81, 0); // ← 이 한 줄 추가!
-
     const contactMaterial = new CANNON.ContactMaterial(ballMat, tableMat, {
       restitution: 0.9, // 0 = 탄성 없음, 1 = 완전 탄성 충돌
       friction: 0.1,
