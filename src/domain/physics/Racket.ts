@@ -1,10 +1,14 @@
 import * as CANNON from 'cannon-es';
 import { PlayerType } from '../game.schema.js';
+import { Logger } from 'pino';
 
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(private player: PlayerType) {
+  constructor(
+    private player: PlayerType,
+    private readonly logger: Logger,
+  ) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
@@ -34,6 +38,7 @@ export default class Racket {
     this.body.wakeUp();
     this.body.velocity.copy(desiredVel);
 
+    // this.logger.info(`Racket position updated to: x=${x}, y=${y}, z=${z}`);
     console.log(`Racket position updated to: x=${x}, y=${y}, z=${z}`);
   }
 

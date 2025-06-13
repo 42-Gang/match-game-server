@@ -16,9 +16,12 @@ const HEARTBEAT_INTERVAL = 60_000;
 let heartbeatHandle: NodeJS.Timeout;
 
 function setCloseWithGrace(io: Server) {
-  closeWithGrace(async () => {
+  closeWithGrace(async ({ err }) => {
+    if (err != null) {
+      logger.error(err, 'Error during graceful shutdown:');
+    }
     clearInterval(heartbeatHandle);
-    logger.info('Graceful shutdown initiated');
+    logger.info('Graceful shutdown');
 
     await io.close();
     logger.info('Socket.IO server closed');
@@ -67,16 +70,16 @@ async function startHeartbeat() {
 }
 
 async function init() {
-  const di = createContainer();
-  await setDiContainer(di);
+  const diContainer = createContainer();
+  await setDiContainer(diContainer);
 
-  await registerKafkaConsumer(di);
+  await registerKafkaConsumer(diContainer);
   const io = new SocketIOServer(PORT, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
   io.logger = logger as BaseLogger;
-  io.diContainer = di;
-  registerSocket(di, io);
+  io.diContainer = diContainer;
+  registerSocket(diContainer, io);
 
   await startHeartbeat();
   setCloseWithGrace(io);
@@ -85,6 +88,6 @@ async function init() {
 }
 
 init().catch((err) => {
-  logger.error('Initialization failed', err);
+  logger.error('Error during server initialization:', err);
   process.exit(1);
 });
