@@ -27,5 +27,10 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
       const { x, y, z } = data;
       gameSession.updateRacketPosition(matchId, playerId, x, y, z);
     });
+
+    socket.on('disconnect', () => {
+      logger.info(`User ${playerId} disconnected from match ${matchId}`);
+      socket.leave(`match:${matchId}`);
+    });
   });
 };
