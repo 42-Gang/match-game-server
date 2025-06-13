@@ -5,10 +5,7 @@ import { Logger } from 'pino';
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(
-    private player: PlayerType,
-    private readonly logger: Logger,
-  ) {
+  constructor(private player: PlayerType) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,

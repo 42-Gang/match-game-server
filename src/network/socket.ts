@@ -21,39 +21,49 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
   io.use(matchMiddleware);
 
   diContainer.register({
-    socket: asValue(io),
+    io: asValue(io),
   });
 
   const fixedTimeStep = 1 / 60; // 60Hz
   const intervalMs = fixedTimeStep * 1000;
 
-  io.on('connection', (socket) => {
-    const logger = io.logger;
-    logger.info(`New connection: ${socket.id} from user ${socket.data.userId}`);
-
-    const gameSpace = createGameSpace();
-
-    const timer = setInterval(() => {
+  const matches = new Map<number, GameSpace>();
+  const timer = setInterval(() => {
+    for (const [matchId, gameSpace] of matches.entries()) {
       gameSpace.step(fixedTimeStep);
 
       const message = {
         ball: gameSpace.getBallPosition(),
         racket1: gameSpace.getRacket1Position(),
       };
-      // logger.info(message, `Emitting game update:`);
-      socket.emit('game:update', message);
+      io.to(`match:${matchId}`).emit('game:update', message);
 
-      // 공이 바닥에 닿으면 루프 종료
       if (gameSpace.getBallPosition().y <= 0) {
         clearInterval(timer);
-        // 필요하면 여기서 플레이어에게 결과 전송
       }
-    }, intervalMs);
+    }
+  }, intervalMs);
+
+  io.on('connection', (socket) => {
+    const logger = io.logger;
+    const matchId = socket.data.matchId;
+
+    socket.join(`match:${matchId}`);
+    logger.info(`New connection: ${socket.id} from user ${socket.data.userId}`);
+
+    if (!matches.has(matchId)) {
+      matches.set(matchId, createGameSpace());
+    }
 
     socket.on('racket:update', (data) => {
       const { x, y, z } = data;
-      console.log(`Racket update received: x=${x}, y=${y}, z=${z}`);
+      const gameSpace = matches.get(matchId);
+      if (!gameSpace) {
+        logger.error(`Game space not found for match ID ${matchId}`);
+        return;
+      }
       gameSpace.updateRacket1Position(playerTypeSchema.enum.PLAYER1, x, y, z);
+      console.log(`Racket update received: x=${x}, y=${y}, z=${z}`);
     });
   });
 };
