@@ -3,6 +3,7 @@ import { Socket } from 'socket.io';
 type NextFunction = (err?: Error) => void;
 
 export async function matchMiddleware(socket: Socket, next: NextFunction) {
+  const logger = socket.nsp.server.logger;
   try {
     const matchId = socket.handshake.query.matchId;
     if (!matchId || Array.isArray(matchId)) {
@@ -24,7 +25,7 @@ export async function matchMiddleware(socket: Socket, next: NextFunction) {
     socket.data.matchId = parsedMatchId;
     next();
   } catch (e) {
-    console.error('Socket middleware error:', e);
+    logger.error(e, 'Socket middleware error:');
     next(e as Error);
   }
 }
