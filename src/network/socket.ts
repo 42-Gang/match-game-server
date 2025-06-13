@@ -8,12 +8,12 @@ import GameSpace from '../domain/physics/GameSpace.js';
 import { playerTypeSchema } from '../domain/game.schema.js';
 import { matchMiddleware } from './match.middleware.js';
 
-function createGameSpace() {
+function createGameSpace(playerId: number) {
   const ball = new Ball();
   const table = new Table();
   const racket1 = new Racket(playerTypeSchema.enum.PLAYER1);
   const racket2 = new Racket(playerTypeSchema.enum.PLAYER2);
-  return new GameSpace(ball, table, racket1, racket2);
+  return new GameSpace(ball, table, racket1, racket2, playerId);
 }
 
 export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
@@ -35,6 +35,7 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
       const message = {
         ball: gameSpace.getBallPosition(),
         racket1: gameSpace.getRacket1Position(),
+        racket2: gameSpace.getRacket2Position(),
       };
       io.to(`match:${matchId}`).emit('game:update', message);
 
@@ -44,16 +45,29 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     }
   }, intervalMs);
 
+  function joinMatch(matchId: number, playerId: number) {
+    if (!matches.has(matchId)) {
+      matches.set(matchId, createGameSpace(playerId));
+      return;
+    }
+
+    const match = matches.get(matchId);
+    if (!match) {
+      io.logger.error(`Match not found for ID ${matchId}`);
+      return;
+    }
+    match.setPlayer2Id(playerId);
+  }
+
   io.on('connection', (socket) => {
     const logger = io.logger;
+    const playerId = socket.data.userId;
     const matchId = socket.data.matchId;
 
     socket.join(`match:${matchId}`);
     logger.info(`New connection: ${socket.id} from user ${socket.data.userId}`);
 
-    if (!matches.has(matchId)) {
-      matches.set(matchId, createGameSpace());
-    }
+    joinMatch(matchId, playerId);
 
     socket.on('racket:update', (data) => {
       const { x, y, z } = data;
@@ -62,8 +76,10 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
         logger.error(`Game space not found for match ID ${matchId}`);
         return;
       }
-      gameSpace.updateRacket1Position(playerTypeSchema.enum.PLAYER1, x, y, z);
-      console.log(`Racket update received: x=${x}, y=${y}, z=${z}`);
+
+      gameSpace.updateRacketPosition(playerId, x, y, z);
+      if (playerId === 222)
+        console.log(`User ${playerId} racket update received: x=${x}, y=${y}, z=${z}`);
     });
   });
 };
