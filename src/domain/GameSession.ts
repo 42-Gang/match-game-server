@@ -4,6 +4,7 @@ import Ball from './physics/Ball.js';
 import Table from './physics/Table.js';
 import Racket from './physics/Racket.js';
 import { Server } from 'socket.io';
+import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 
 export default class GameSession {
   private readonly gameSpaces: Map<number, GameSpace>;
@@ -27,7 +28,7 @@ export default class GameSession {
           racket1: gameSpace.getRacket1Position(),
           racket2: gameSpace.getRacket2Position(),
         };
-        this.io.to(`match:${matchId}`).emit('game:update', message);
+        this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
 
         if (gameSpace.getBallPosition().y <= 0) {
           clearInterval(timer);

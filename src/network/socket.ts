@@ -3,6 +3,7 @@ import { asValue, AwilixContainer } from 'awilix';
 import { socketMiddleware } from './utils/middleware.js';
 import { matchMiddleware } from './match.middleware.js';
 import GameSession from '../domain/GameSession.js';
+import { MATCH_SOCKET_EVENTS } from './match.event.js';
 
 export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
   io.use(socketMiddleware);
@@ -22,7 +23,7 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     socket.join(`match:${matchId}`);
     logger.info(`New connection: ${socket.id} from user ${socket.data.userId}`);
 
-    socket.on('racket:update', (data) => {
+    socket.on(MATCH_SOCKET_EVENTS.RACKET, (data) => {
       const { x, y, z } = data;
       gameSession.updateRacketPosition(matchId, playerId, x, y, z);
     });
