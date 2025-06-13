@@ -2,7 +2,6 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table from './Table.js';
 import Racket from './Racket.js';
-import { PlayerType, playerTypeSchema } from '../game.schema.js';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -14,8 +13,6 @@ export default class GameSpace {
     private readonly table: Table,
     private readonly racket1: Racket,
     private readonly racket2: Racket,
-    private player1Id?: number,
-    private player2Id?: number,
   ) {
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
@@ -25,10 +22,10 @@ export default class GameSpace {
     this.world.addBody(racket1.body);
     this.world.addBody(racket2.body);
 
-    const tableMat = table.body.material;
-    const ballMat = ball.body.material;
-    const racket1Mat = racket1.body.material;
-    const racket2Mat = racket2.body.material;
+    const tableMat = this.table.getMaterial();
+    const ballMat = this.ball.getMaterial();
+    const racket1Mat = this.racket1.getMaterial();
+    const racket2Mat = this.racket2.getMaterial();
 
     const contactMaterial = new CANNON.ContactMaterial(ballMat, tableMat, {
       restitution: 0.9, // 0 = 탄성 없음, 1 = 완전 탄성 충돌
@@ -45,10 +42,6 @@ export default class GameSpace {
     this.world.addContactMaterial(contactMaterial);
     this.world.addContactMaterial(racketContactMaterial);
     this.world.addContactMaterial(racket2ContactMaterial);
-  }
-
-  addBody(body: CANNON.Body) {
-    this.world.addBody(body);
   }
 
   step(dt: number) {
@@ -74,7 +67,7 @@ export default class GameSpace {
   updateRacketPosition(playerId: number, x: number, y: number, z: number) {
     const racket = this.getRacketByPlayerId(playerId);
     let clampedX;
-    if (playerId === this.player1Id) {
+    if (playerId === this.racket1.getPlayerId()) {
       clampedX = this.clamp(x, 0, 2);
     } else {
       clampedX = this.clamp(x, -2, 0);
@@ -83,19 +76,11 @@ export default class GameSpace {
     racket.updatePositionTest(clampedX, y, clampedZ);
   }
 
-  setPlayer2Id(playerId: number) {
-    if (this.player2Id !== undefined) {
-      throw new Error('Player 2 ID is already set.');
-    }
-    this.player2Id = playerId;
-    this.world.addBody(this.racket2.body);
-  }
-
   private getRacketByPlayerId(playerId: number): Racket {
-    if (this.player1Id === playerId) {
+    if (this.racket1.getPlayerId() === playerId) {
       return this.racket1;
     }
-    if (this.player2Id === playerId) {
+    if (this.racket2.getPlayerId() === playerId) {
       return this.racket2;
     }
 

@@ -15,13 +15,22 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
 
   const gameSession = new GameSession(io);
 
+  // 임시 게임 세션 생성
+  gameSession.createGameSpace({
+    matchId: 4,
+    player1Id: 111,
+    player2Id: 222,
+  });
+
   io.on('connection', (socket) => {
     const logger = io.logger;
     const playerId = socket.data.userId;
     const matchId = socket.data.matchId;
 
     socket.join(`match:${matchId}`);
-    logger.info(`New connection: ${socket.id} from user ${socket.data.userId}`);
+    logger.info(
+      `New connection: ${socket.id} from user ${socket.data.userId} joined match ${matchId}`,
+    );
 
     socket.on(MATCH_SOCKET_EVENTS.RACKET, (data) => {
       const { x, y, z } = data;

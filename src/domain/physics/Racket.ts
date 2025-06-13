@@ -1,10 +1,13 @@
 import * as CANNON from 'cannon-es';
-import { PlayerType } from '../game.schema.js';
+import { PlayerType, playerTypeSchema } from '../game.schema.js';
 
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(private player: PlayerType) {
+  constructor(
+    private readonly playerId: number,
+    playerType: PlayerType,
+  ) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
@@ -12,7 +15,9 @@ export default class Racket {
       material,
     });
     this.body.sleepState = CANNON.Body.AWAKE;
-    this.body.position.set(1.8, 0.8, 0);
+
+    if (playerType === playerTypeSchema.enum.PLAYER1) this.body.position.set(1.8, 0.8, 0);
+    if (playerType === playerTypeSchema.enum.PLAYER2) this.body.position.set(-1.8, 0.8, 0);
 
     const tiltAngle = 20 * Math.PI;
     const xAxis = new CANNON.Vec3(0, 0, -1);
@@ -35,11 +40,18 @@ export default class Racket {
     this.body.velocity.copy(desiredVel);
   }
 
-  getPlayer(): PlayerType {
-    return this.player;
+  getPlayerId() {
+    return this.playerId;
   }
 
   getPosition() {
     return this.body.position.clone();
+  }
+
+  getMaterial() {
+    if (!this.body.material) {
+      throw new Error('Racket material is not defined');
+    }
+    return this.body.material;
   }
 }

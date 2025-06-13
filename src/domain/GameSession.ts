@@ -1,5 +1,4 @@
 import GameSpace from './physics/GameSpace.js';
-import { playerTypeSchema } from './game.schema.js';
 import Ball from './physics/Ball.js';
 import Table from './physics/Table.js';
 import Racket from './physics/Racket.js';
@@ -44,9 +43,9 @@ export default class GameSession {
 
     const ball = new Ball();
     const table = new Table();
-    const racket1 = new Racket(playerTypeSchema.enum.PLAYER1);
-    const racket2 = new Racket(playerTypeSchema.enum.PLAYER2);
-    const gameSpace = new GameSpace(ball, table, racket1, racket2, input.player1Id);
+    const racket1 = new Racket(input.player1Id);
+    const racket2 = new Racket(input.player2Id);
+    const gameSpace = new GameSpace(ball, table, racket1, racket2);
 
     this.gameSpaces.set(input.matchId, gameSpace);
   }
@@ -57,6 +56,9 @@ export default class GameSession {
       throw new Error(`Game space for match ID ${matchId} not found.`);
     }
 
+    console.log(
+      `Updating racket position for player ${playerId} in match ${matchId}: (${x}, ${y}, ${z})`,
+    );
     gameSpace.updateRacketPosition(playerId, x, y, z);
   }
 
