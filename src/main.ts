@@ -1,66 +1,34 @@
-import { createServer, Server } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-import { redis } from './plugins/redis.js';
+import process from 'node:process';
 import closeWithGrace from 'close-with-grace';
-import { registerSocketGateway } from './sockets/gateway.js';
+import { Server, Server as SocketIOServer } from 'socket.io';
 import { asClass, asFunction, asValue, AwilixContainer, createContainer, Lifetime } from 'awilix';
-import { logger } from './plugins/logger.js';
-import * as process from 'node:process';
-import { startConsumer } from './kafka/consumer.js';
-import pino from 'pino';
-import BaseLogger = pino.BaseLogger;
-import { setDiContainer } from './plugins/container.js';
+import { logger } from './infra/logger.js';
+import { redis } from './infra/redis.js';
+import { setDiContainer } from './infra/container.js';
+import { startConsumer } from './infra/kafka/consumer.js';
+import type { BaseLogger } from 'pino';
+import { registerSocket } from './network/socket.js';
 
-let heartbeatInterval: NodeJS.Timeout;
-const REDIS_HEARTBEAT_TTL_SECONDS = 60 + 10;
+const PORT = Number(process.env.PORT) || 8080;
+const MATCH_KEY = `match-server:${process.env.SERVER_NAME}`;
+const HEARTBEAT_TTL = 70;
+const HEARTBEAT_INTERVAL = 60_000;
+let heartbeatHandle: NodeJS.Timeout;
 
-function registerSocketServer(diContainer: AwilixContainer) {
-  const httpServer = createServer();
-  const io = new SocketIOServer(httpServer);
-  io.logger = logger;
+function setCloseWithGrace(io: Server) {
+  closeWithGrace(async ({ err }) => {
+    if (err != null) {
+      logger.error(err, 'Error during graceful shutdown:');
+    }
+    clearInterval(heartbeatHandle);
+    logger.info('Graceful shutdown');
 
-  io.diContainer = diContainer;
-  registerSocketGateway(diContainer, io);
-  return { httpServer, io };
-}
-
-function startServer(server: Server) {
-  server.listen(process.env.PORT, () => {
-    logger.info(`Match Game Server running on port ${process.env.PORT}`);
-  });
-}
-
-function getMatchServerKey() {
-  return `match-server:${process.env.SERVER_NAME}`;
-}
-
-async function configureServer() {
-  await redis.set(getMatchServerKey(), process.env.SERVER_NAME);
-  await redis.expire(getMatchServerKey(), REDIS_HEARTBEAT_TTL_SECONDS);
-
-  heartbeatInterval = setInterval(async () => {
-    logger.info('Match Server Heartbeat');
-    await redis.expire(getMatchServerKey(), REDIS_HEARTBEAT_TTL_SECONDS);
-  }, 60 * 1000);
-}
-
-export async function setupGracefulShutdown(
-  server: Server,
-  socket: SocketIOServer,
-  logger: BaseLogger,
-) {
-  closeWithGrace(async () => {
-    clearInterval(heartbeatInterval);
-    logger.info('Graceful shutdown initiated');
-
-    server.close();
-    logger.info('HTTP server closed');
-
-    await socket.close();
+    await io.close();
     logger.info('Socket.IO server closed');
 
-    await redis.del(getMatchServerKey());
-    logger.info('Match server key deleted from Redis');
+    await redis.del(MATCH_KEY);
+    logger.info('Redis key deleted');
+
     await redis.quit();
     logger.info('Redis connection closed');
   });
@@ -88,18 +56,38 @@ async function registerKafkaConsumer(diContainer: AwilixContainer) {
       injectionMode: 'CLASSIC',
     }),
   });
-  await diContainer.resolve('kafkaConsumer');
+  diContainer.resolve('kafkaConsumer');
+  // await diContainer.resolve('kafkaConsumer');
+}
+
+async function startHeartbeat() {
+  await redis.set(MATCH_KEY, process.env.SERVER_NAME!);
+  await redis.expire(MATCH_KEY, HEARTBEAT_TTL);
+  heartbeatHandle = setInterval(async () => {
+    logger.info('Match Server Heartbeat');
+    await redis.expire(MATCH_KEY, HEARTBEAT_TTL);
+  }, HEARTBEAT_INTERVAL);
 }
 
 async function init() {
   const diContainer = createContainer();
-  const { httpServer, io } = registerSocketServer(diContainer);
-  await configureServer();
-  await setDiContainer(httpServer, diContainer);
+  await setDiContainer(diContainer);
 
-  startServer(httpServer);
-  registerKafkaConsumer(diContainer);
-  await setupGracefulShutdown(httpServer, io, logger); // 서버 종료 시그널 핸들러 등록
+  await registerKafkaConsumer(diContainer);
+  const io = new SocketIOServer(PORT, {
+    cors: { origin: '*', methods: ['GET', 'POST'] },
+  });
+  io.logger = logger as BaseLogger;
+  io.diContainer = diContainer;
+  registerSocket(diContainer, io);
+
+  await startHeartbeat();
+  setCloseWithGrace(io);
+
+  logger.info(`Server listening on port ${PORT}`);
 }
 
-init();
+init().catch((err) => {
+  logger.error('Error during server initialization:', err);
+  process.exit(1);
+});

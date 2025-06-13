@@ -1,8 +1,7 @@
 import { asValue, AwilixContainer } from 'awilix';
-import { Server } from 'http';
 import { logger } from './logger.js';
 
-export async function setDiContainer(server: Server, diContainer: AwilixContainer) {
+export async function setDiContainer(diContainer: AwilixContainer) {
   diContainer.register({
     logger: asValue(logger),
   });

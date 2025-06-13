@@ -1,8 +1,8 @@
-import { kafka } from '../plugins/kafka.js';
 import { KafkaTopicConsumer } from './consumers/kafka.topic.consumer.js';
 import pino from 'pino';
 import BaseLogger = pino.BaseLogger;
 import process from 'node:process';
+import { kafka } from '../kafka.js';
 
 export async function startConsumer(topicConsumers: KafkaTopicConsumer[], logger: BaseLogger) {
   const consumer = kafka.consumer({ groupId: process.env.SERVER_NAME, sessionTimeout: 10000 }); // Adjust groupId as needed
