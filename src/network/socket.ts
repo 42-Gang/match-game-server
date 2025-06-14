@@ -15,13 +15,6 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
 
   const gameSession: GameSession = diContainer.resolve<GameSession>('gameSession');
 
-  // 임시 게임 세션 생성
-  gameSession.createGameSpace({
-    matchId: 4,
-    player1Id: 111,
-    player2Id: 222,
-  });
-
   io.on('connection', (socket) => {
     const logger = io.logger;
     const playerId = socket.data.userId;
