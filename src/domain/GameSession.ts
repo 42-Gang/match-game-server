@@ -46,7 +46,7 @@ export default class GameSession {
     const ball = new Ball();
     const table = new Table();
     const racket1 = new Racket(input.player1Id, playerTypeSchema.enum.PLAYER1);
-    const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER1);
+    const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER2);
     const gameSpace = new GameSpace(ball, table, racket1, racket2);
 
     this.gameSpaces.set(input.matchId, gameSpace);
