@@ -13,9 +13,8 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     io: asValue(io),
   });
 
-  const gameSession: GameSession = diContainer.resolve<GameSession>('gameSession');
-
   io.on('connection', (socket) => {
+    const gameSession: GameSession = diContainer.resolve<GameSession>('gameSession');
     const logger = io.logger;
     const playerId = socket.data.userId;
     const matchId = socket.data.matchId;

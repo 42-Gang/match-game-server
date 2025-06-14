@@ -80,15 +80,16 @@ async function init() {
   const diContainer = createContainer({
     injectionMode: 'CLASSIC',
   });
-  await setDiContainer(diContainer);
 
-  await registerKafkaConsumer(diContainer);
   const io = new SocketIOServer(PORT, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
   io.logger = logger as BaseLogger;
   io.diContainer = diContainer;
   registerSocket(diContainer, io);
+
+  await setDiContainer(diContainer);
+  await registerKafkaConsumer(diContainer);
 
   await startHeartbeat();
   setCloseWithGrace(io);

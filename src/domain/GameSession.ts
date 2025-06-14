@@ -9,11 +9,12 @@ import { Logger } from 'pino';
 
 export default class GameSession {
   private readonly gameSpaces: Map<number, GameSpace>;
-  private readonly logger: Logger;
 
-  constructor(private readonly io: Server) {
+  constructor(
+    private readonly io: Server,
+    private readonly logger: Logger,
+  ) {
     this.gameSpaces = new Map<number, GameSpace>();
-    this.logger = io.logger;
     this.startLoop();
   }
 
@@ -62,7 +63,8 @@ export default class GameSession {
   updateRacketPosition(matchId: number, playerId: number, x: number, y: number, z: number) {
     const gameSpace = this.gameSpaces.get(matchId);
     if (!gameSpace) {
-      throw new Error(`Game space for match ID ${matchId} not found.`);
+      console.error(`Game space for match ID ${matchId} not found.`);
+      return;
     }
 
     gameSpace.updateRacketPosition(playerId, x, y, z);
