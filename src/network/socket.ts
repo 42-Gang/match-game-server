@@ -13,7 +13,7 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     io: asValue(io),
   });
 
-  const gameSession = new GameSession(io);
+  const gameSession: GameSession = diContainer.resolve<GameSession>('gameSession');
 
   // 임시 게임 세션 생성
   gameSession.createGameSpace({

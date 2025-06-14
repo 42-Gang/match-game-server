@@ -32,6 +32,7 @@ export default class GameSession {
 
         if (gameSpace.getBallPosition().y <= 0) {
           clearInterval(timer);
+          // TODO: Add logic to remove game spaces from the map when a game ends.
         }
       }
     }, intervalMs);
