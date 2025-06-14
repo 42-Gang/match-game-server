@@ -5,13 +5,15 @@ import Racket from './physics/Racket.js';
 import { Server } from 'socket.io';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { playerTypeSchema } from './game.schema.js';
+import { Logger } from 'pino';
 
 export default class GameSession {
   private readonly gameSpaces: Map<number, GameSpace>;
+  private readonly logger: Logger;
 
   constructor(private readonly io: Server) {
     this.gameSpaces = new Map<number, GameSpace>();
-
+    this.logger = io.logger;
     this.startLoop();
   }
 
@@ -58,7 +60,7 @@ export default class GameSession {
       throw new Error(`Game space for match ID ${matchId} not found.`);
     }
 
-    console.log(
+    this.logger.info(
       `Updating racket position for player ${playerId} in match ${matchId}: (${x}, ${y}, ${z})`,
     );
     gameSpace.updateRacketPosition(playerId, x, y, z);
