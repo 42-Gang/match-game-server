@@ -42,7 +42,14 @@ async function registerKafkaConsumer(diContainer: AwilixContainer) {
     resolverOptions: {
       lifetime: Lifetime.SINGLETON,
       register: asClass,
-      injectionMode: 'CLASSIC',
+    },
+  });
+  await diContainer.loadModules([`./**/src/**/*.topic.service.${NODE_EXTENSION}`], {
+    esModules: true,
+    formatName: 'camelCase',
+    resolverOptions: {
+      lifetime: Lifetime.SINGLETON,
+      register: asClass,
     },
   });
 
@@ -90,6 +97,6 @@ async function init() {
 }
 
 init().catch((err) => {
-  logger.error('Error during server initialization:', err);
+  logger.error(err, 'Error during server initialization:');
   process.exit(1);
 });
