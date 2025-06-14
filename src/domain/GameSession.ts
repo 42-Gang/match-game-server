@@ -40,7 +40,12 @@ export default class GameSession {
     }, intervalMs);
   }
 
-  createGameSpace(input: { matchId: number; player1Id: number; player2Id: number }) {
+  createGameSpace(input: {
+    tournamentId: number;
+    matchId: number;
+    player1Id: number;
+    player2Id: number;
+  }) {
     if (this.isExist(input.matchId)) {
       throw new Error(`Game space for match ID ${input.matchId} already exists.`);
     }
