@@ -60,9 +60,6 @@ export default class GameSession {
       throw new Error(`Game space for match ID ${matchId} not found.`);
     }
 
-    this.logger.info(
-      `Updating racket position for player ${playerId} in match ${matchId}: (${x}, ${y}, ${z})`,
-    );
     gameSpace.updateRacketPosition(playerId, x, y, z);
   }
 
