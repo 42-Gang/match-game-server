@@ -31,8 +31,8 @@ export default class GameSession {
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
 
         if (gameSpace.getBallPosition().y <= 0) {
-          clearInterval(timer);
-          // TODO: Add logic to remove game spaces from the map when a game ends.
+          // clearInterval(timer);
+          this.gameSpaces.delete(matchId);
         }
       }
     }, intervalMs);
