@@ -1,10 +1,7 @@
 import * as CANNON from 'cannon-es';
-import { PlayerType } from '../game.schema.js';
 
 export default class Ball {
   public body: CANNON.Body;
-  private lastHitPlayer: PlayerType | null = null;
-  private touchedTable: boolean = false;
 
   constructor() {
     const material = new CANNON.Material('ballMaterial');
@@ -20,8 +17,12 @@ export default class Ball {
     this.body.position.set(1, 1.5, 0); // x=0, y=0.8m, z=0 (탁구대 중앙 상공)
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
+  }
 
-    this.lastHitPlayer = null;
-    this.touchedTable = false;
+  getMaterial() {
+    if (!this.body.material) {
+      throw new Error('Ball material is not defined');
+    }
+    return this.body.material;
   }
 }

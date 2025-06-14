@@ -70,7 +70,9 @@ async function startHeartbeat() {
 }
 
 async function init() {
-  const diContainer = createContainer();
+  const diContainer = createContainer({
+    injectionMode: 'CLASSIC',
+  });
   await setDiContainer(diContainer);
 
   await registerKafkaConsumer(diContainer);

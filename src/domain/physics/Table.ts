@@ -16,4 +16,11 @@ export default class Table {
     });
     this.body.position.set(0, 0.76 - halfThickness, 0); // 상판 중심이 높이 0.76m에 오도록
   }
+
+  getMaterial(): CANNON.Material {
+    if (!this.body.material) {
+      throw new Error('Table body material is not defined');
+    }
+    return this.body.material;
+  }
 }
