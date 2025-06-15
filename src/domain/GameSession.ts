@@ -22,7 +22,8 @@ export default class GameSession {
     const fixedTimeStep = 1 / 60; // 60Hz
     const intervalMs = fixedTimeStep * 1000;
 
-    const timer = setInterval(() => {
+    this.logger.info(`Game session started with fixed time step: ${fixedTimeStep} seconds`);
+    setInterval(() => {
       for (const [matchId, gameSpace] of this.gameSpaces.entries()) {
         gameSpace.step(fixedTimeStep);
 
@@ -50,6 +51,7 @@ export default class GameSession {
     if (this.isExist(input.matchId)) {
       throw new Error(`Game space for match ID ${input.matchId} already exists.`);
     }
+    this.logger.info(`Creating game space for match ID ${input.matchId}`);
 
     const ball = new Ball();
     const table = new Table();
