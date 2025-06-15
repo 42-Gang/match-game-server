@@ -11,7 +11,7 @@ export const matchRequestMessageSchema = z.object({
 
 export type MatchRequestMessageType = TypeOf<typeof matchRequestMessageSchema>;
 
-export const handleMatchCreatedInputSchema = z.object({
+export const matchCreatedProducingInputSchema = z.object({
   tournamentId: z.number(),
   matchId: z.number(),
   serverName: z.string(),
@@ -19,9 +19,9 @@ export const handleMatchCreatedInputSchema = z.object({
   player2Id: z.number(),
 });
 
-export type HandleMatchCreatedInputType = TypeOf<typeof handleMatchCreatedInputSchema>;
+export type HandleMatchCreatedInputType = TypeOf<typeof matchCreatedProducingInputSchema>;
 
-export const handleMatchResultInputSchema = z.object({
+export const matchResultProducingInputSchema = z.object({
   tournamentId: z.number(),
   matchId: z.number(),
   player1Id: z.number(),
@@ -34,4 +34,4 @@ export const handleMatchResultInputSchema = z.object({
   loserId: z.number(),
   round: z.number(),
 });
-export type HandleMatchResultInputType = TypeOf<typeof handleMatchResultInputSchema>;
+export type HandleMatchResultInputType = TypeOf<typeof matchResultProducingInputSchema>;

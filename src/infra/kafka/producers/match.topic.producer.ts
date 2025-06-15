@@ -1,7 +1,7 @@
 import { producer } from '../../kafka.js';
 import {
-  handleMatchCreatedInputSchema,
-  handleMatchResultInputSchema,
+  matchCreatedProducingInputSchema,
+  matchResultProducingInputSchema,
 } from '../schemas/match.topic.schema.js';
 import { MATCH_EVENTS, TOPICS } from '../constants.js';
 
@@ -12,7 +12,7 @@ export async function matchCreatedProducer(input: {
   player2Id: number;
   player2SocketId: string;
 }) {
-  const message = handleMatchCreatedInputSchema.parse({
+  const message = matchCreatedProducingInputSchema.parse({
     tournamentId: input.matchId,
     matchId: input.matchId,
     serverName: input.matchServerName,
@@ -33,7 +33,6 @@ export async function matchCreatedProducer(input: {
   });
 }
 
-// TODO: 게임 결과 발생 이벤트 발생
 export async function matchResultProducer(input: {
   tournamentId: number;
   matchId: number;
@@ -47,7 +46,7 @@ export async function matchResultProducer(input: {
   loserId: number;
   round: number;
 }) {
-  const message = handleMatchResultInputSchema.parse({
+  const message = matchResultProducingInputSchema.parse({
     tournamentId: input.tournamentId,
     matchId: input.matchId,
     player1Id: input.player1Id,
