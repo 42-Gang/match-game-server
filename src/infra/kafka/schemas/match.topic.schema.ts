@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { TypeOf, z } from 'zod';
 
 export const matchRequestMessageSchema = z.object({
   tournamentId: z.number(),
@@ -9,4 +9,14 @@ export const matchRequestMessageSchema = z.object({
   timestamp: z.string().datetime(),
 });
 
-export type MatchRequestMessageType = z.infer<typeof matchRequestMessageSchema>;
+export type MatchRequestMessageType = TypeOf<typeof matchRequestMessageSchema>;
+
+export const handleMatchCreatedInputSchema = z.object({
+  tournamentId: z.number(),
+  matchId: z.number(),
+  serverName: z.string(),
+  player1Id: z.number(),
+  player2Id: z.number(),
+});
+
+export type HandleMatchCreatedInputType = TypeOf<typeof handleMatchCreatedInputSchema>;
