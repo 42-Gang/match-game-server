@@ -20,3 +20,18 @@ export const handleMatchCreatedInputSchema = z.object({
 });
 
 export type HandleMatchCreatedInputType = TypeOf<typeof handleMatchCreatedInputSchema>;
+
+export const handleMatchResultInputSchema = z.object({
+  tournamentId: z.number(),
+  matchId: z.number(),
+  player1Id: z.number(),
+  player2Id: z.number(),
+  score: z.object({
+    player1: z.number(),
+    player2: z.number(),
+  }),
+  winnerId: z.number(),
+  loserId: z.number(),
+  round: z.number(),
+});
+export type HandleMatchResultInputType = TypeOf<typeof handleMatchResultInputSchema>;
