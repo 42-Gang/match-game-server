@@ -5,7 +5,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY . .
+COPY src/ ./src/
+COPY tsconfig.json ./
+COPY package*.json ./
+COPY .env* ./
+
 RUN npm run build:ts
 
 # 2. Production Stage
@@ -17,9 +21,6 @@ COPY package*.json ./
 RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-# ✅ 마이그레이션은 build 시 하지 않음
 
 EXPOSE 3000
 
