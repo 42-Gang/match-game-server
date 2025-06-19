@@ -9,11 +9,12 @@ import { Logger } from 'pino';
 
 export default class GameSession {
   private readonly gameSpaces: Map<number, GameSpace>;
-  private readonly logger: Logger;
 
-  constructor(private readonly io: Server) {
+  constructor(
+    private readonly io: Server,
+    private readonly logger: Logger,
+  ) {
     this.gameSpaces = new Map<number, GameSpace>();
-    this.logger = io.logger;
     this.startLoop();
   }
 
@@ -21,7 +22,8 @@ export default class GameSession {
     const fixedTimeStep = 1 / 60; // 60Hz
     const intervalMs = fixedTimeStep * 1000;
 
-    const timer = setInterval(() => {
+    this.logger.info(`Game session started with fixed time step: ${fixedTimeStep} seconds`);
+    setInterval(() => {
       for (const [matchId, gameSpace] of this.gameSpaces.entries()) {
         gameSpace.step(fixedTimeStep);
 
@@ -40,10 +42,16 @@ export default class GameSession {
     }, intervalMs);
   }
 
-  createGameSpace(input: { matchId: number; player1Id: number; player2Id: number }) {
+  createGameSpace(input: {
+    tournamentId: number;
+    matchId: number;
+    player1Id: number;
+    player2Id: number;
+  }) {
     if (this.isExist(input.matchId)) {
       throw new Error(`Game space for match ID ${input.matchId} already exists.`);
     }
+    this.logger.info(`Creating game space for match ID ${input.matchId}`);
 
     const ball = new Ball();
     const table = new Table();
@@ -57,12 +65,10 @@ export default class GameSession {
   updateRacketPosition(matchId: number, playerId: number, x: number, y: number, z: number) {
     const gameSpace = this.gameSpaces.get(matchId);
     if (!gameSpace) {
+      this.logger.error(`Game space for match ID ${matchId} not found.`);
       throw new Error(`Game space for match ID ${matchId} not found.`);
     }
 
-    this.logger.info(
-      `Updating racket position for player ${playerId} in match ${matchId}: (${x}, ${y}, ${z})`,
-    );
     gameSpace.updateRacketPosition(playerId, x, y, z);
   }
 

@@ -42,7 +42,14 @@ async function registerKafkaConsumer(diContainer: AwilixContainer) {
     resolverOptions: {
       lifetime: Lifetime.SINGLETON,
       register: asClass,
-      injectionMode: 'CLASSIC',
+    },
+  });
+  await diContainer.loadModules([`./**/src/**/*.topic.service.${NODE_EXTENSION}`], {
+    esModules: true,
+    formatName: 'camelCase',
+    resolverOptions: {
+      lifetime: Lifetime.SINGLETON,
+      register: asClass,
     },
   });
 
@@ -73,15 +80,16 @@ async function init() {
   const diContainer = createContainer({
     injectionMode: 'CLASSIC',
   });
-  await setDiContainer(diContainer);
 
-  await registerKafkaConsumer(diContainer);
   const io = new SocketIOServer(PORT, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
   io.logger = logger as BaseLogger;
   io.diContainer = diContainer;
   registerSocket(diContainer, io);
+
+  await setDiContainer(diContainer);
+  await registerKafkaConsumer(diContainer);
 
   await startHeartbeat();
   setCloseWithGrace(io);
@@ -90,6 +98,6 @@ async function init() {
 }
 
 init().catch((err) => {
-  logger.error('Error during server initialization:', err);
+  logger.error(err, 'Error during server initialization:');
   process.exit(1);
 });
