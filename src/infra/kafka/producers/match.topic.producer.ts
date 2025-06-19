@@ -6,14 +6,14 @@ import {
 import { MATCH_EVENTS, TOPICS } from '../constants.js';
 
 export async function matchCreatedProducer(input: {
+  tournamentId: number;
   matchId: number;
   matchServerName: string;
   player1Id: number;
   player2Id: number;
-  player2SocketId: string;
 }) {
   const message = matchCreatedProducingInputSchema.parse({
-    tournamentId: input.matchId,
+    tournamentId: input.tournamentId,
     matchId: input.matchId,
     serverName: input.matchServerName,
     player1Id: input.player1Id,
