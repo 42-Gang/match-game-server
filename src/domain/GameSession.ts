@@ -6,15 +6,26 @@ import { Server } from 'socket.io';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { playerTypeSchema } from './game.schema.js';
 import { Logger } from 'pino';
+import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
+
+interface GameSessionInfo {
+  gameSpace: GameSpace;
+  player1Connected: boolean;
+  player2Connected: boolean;
+  player1Id: number;
+  player2Id: number;
+  isGameStarted: boolean;
+  countdownStarted: boolean;
+}
 
 export default class GameSession {
-  private readonly gameSpaces: Map<number, GameSpace>;
+  private readonly gameSessions: Map<number, GameSessionInfo>;
 
   constructor(
     private readonly io: Server,
     private readonly logger: Logger,
   ) {
-    this.gameSpaces = new Map<number, GameSpace>();
+    this.gameSessions = new Map<number, GameSessionInfo>();
     this.startLoop();
   }
 
@@ -24,7 +35,10 @@ export default class GameSession {
 
     this.logger.info(`Game session started with fixed time step: ${fixedTimeStep} seconds`);
     setInterval(() => {
-      for (const [matchId, gameSpace] of this.gameSpaces.entries()) {
+      for (const [matchId, sessionInfo] of this.gameSessions.entries()) {
+        if (!sessionInfo.isGameStarted) continue;
+
+        const gameSpace = sessionInfo.gameSpace;
         gameSpace.step(fixedTimeStep);
 
         const message = {
@@ -36,7 +50,7 @@ export default class GameSession {
 
         if (gameSpace.getBallPosition().y <= 0) {
           // clearInterval(timer);
-          this.gameSpaces.delete(matchId);
+          this.gameSessions.delete(matchId);
         }
       }
     }, intervalMs);
@@ -59,20 +73,116 @@ export default class GameSession {
     const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER2);
     const gameSpace = new GameSpace(ball, table, racket1, racket2);
 
-    this.gameSpaces.set(input.matchId, gameSpace);
+    this.gameSessions.set(input.matchId, {
+      gameSpace,
+      player1Connected: false,
+      player2Connected: false,
+      player1Id: input.player1Id,
+      player2Id: input.player2Id,
+      isGameStarted: false,
+      countdownStarted: false,
+    });
   }
 
   updateRacketPosition(matchId: number, playerId: number, x: number, y: number, z: number) {
-    const gameSpace = this.gameSpaces.get(matchId);
-    if (!gameSpace) {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) {
       this.logger.error(`Game space for match ID ${matchId} not found.`);
       throw new Error(`Game space for match ID ${matchId} not found.`);
     }
 
-    gameSpace.updateRacketPosition(playerId, x, y, z);
+    sessionInfo.gameSpace.updateRacketPosition(playerId, x, y, z);
   }
 
   isExist(matchId: number): boolean {
-    return this.gameSpaces.has(matchId);
+    return this.gameSessions.has(matchId);
+  }
+
+  playerConnected(matchId: number, playerId: number): void {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) {
+      this.logger.error(`Game session for match ID ${matchId} not found.`);
+      return;
+    }
+
+    if (playerId === sessionInfo.player1Id) {
+      sessionInfo.player1Connected = true;
+      this.logger.info(`Player 1 (${playerId}) connected to match ${matchId}`);
+    } else if (playerId === sessionInfo.player2Id) {
+      sessionInfo.player2Connected = true;
+      this.logger.info(`Player 2 (${playerId}) connected to match ${matchId}`);
+    }
+
+    this.checkAndStartCountdown(matchId);
+  }
+
+  playerDisconnected(matchId: number, playerId: number): void {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) {
+      return;
+    }
+
+    if (playerId === sessionInfo.player1Id) {
+      sessionInfo.player1Connected = false;
+      this.logger.info(`Player 1 (${playerId}) disconnected from match ${matchId}`);
+    } else if (playerId === sessionInfo.player2Id) {
+      sessionInfo.player2Connected = false;
+      this.logger.info(`Player 2 (${playerId}) disconnected from match ${matchId}`);
+    }
+  }
+
+  private checkAndStartCountdown(matchId: number): void {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) return;
+
+    if (
+      sessionInfo.player1Connected &&
+      sessionInfo.player2Connected &&
+      !sessionInfo.countdownStarted
+    ) {
+      sessionInfo.countdownStarted = true;
+      this.logger.info(`Both players connected for match ${matchId}. Starting countdown.`);
+      this.startCountdown(matchId);
+    }
+  }
+
+  private startCountdown(matchId: number): void {
+    let countdown = 3;
+
+    const countdownInterval = setInterval(() => {
+      const sessionInfo = this.gameSessions.get(matchId);
+      if (!sessionInfo || !sessionInfo.player1Connected || !sessionInfo.player2Connected) {
+        clearInterval(countdownInterval);
+
+        if (sessionInfo) {
+          sessionInfo.countdownStarted = false;
+        }
+
+        this.logger.info(`Countdown cancelled for match ${matchId}: Player disconnected`);
+        this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.COUNTDOWN_CANCELLED);
+        return;
+      }
+
+      this.io
+        .to(`match:${matchId}`)
+        .emit(MATCH_SOCKET_EVENTS.COUNTDOWN, socketCountDownSchema.parse({ count: countdown }));
+      this.logger.info(`Countdown for match ${matchId}: ${countdown}`);
+
+      countdown -= 1;
+
+      if (countdown < 0) {
+        clearInterval(countdownInterval);
+        this.startGame(matchId);
+      }
+    }, 1000);
+  }
+
+  private startGame(matchId: number): void {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) return;
+
+    sessionInfo.isGameStarted = true;
+    this.logger.info(`Game started for match ${matchId}`);
+    this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_START);
   }
 }
