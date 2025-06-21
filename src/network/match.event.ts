@@ -7,4 +7,5 @@ export const MATCH_SOCKET_EVENTS = {
   GAME_START: 'game-start',
   PLAYER_CONNECTED: 'player-connected',
   PLAYER_DISCONNECTED: 'player-disconnected',
+  WAITING_FOR_PLAYER: 'waiting-for-player',
 };
