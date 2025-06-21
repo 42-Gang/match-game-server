@@ -89,8 +89,8 @@ export default class GameSession {
   updateRacketPosition(matchId: number, playerId: number, x: number, y: number, z: number) {
     const sessionInfo = this.gameSessions.get(matchId);
     if (!sessionInfo) {
-      this.logger.error(`Game space for match ID ${matchId} not found.`);
-      throw new Error(`Game space for match ID ${matchId} not found.`);
+      this.logger.error(`GameSession: Game space for match ID ${matchId} not found.`);
+      throw new Error(`GameSession: Game space for match ID ${matchId} not found.`);
     }
 
     sessionInfo.gameSpace.updateRacketPosition(playerId, x, y, z);
