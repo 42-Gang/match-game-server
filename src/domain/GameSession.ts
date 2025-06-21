@@ -16,6 +16,7 @@ interface GameSessionInfo {
   player2Id: number;
   isGameStarted: boolean;
   countdownStarted: boolean;
+  countdownInterval: NodeJS.Timeout | null;
 }
 
 export default class GameSession {
@@ -81,6 +82,7 @@ export default class GameSession {
       player2Id: input.player2Id,
       isGameStarted: false,
       countdownStarted: false,
+      countdownInterval: null,
     });
   }
 
@@ -122,6 +124,11 @@ export default class GameSession {
       return;
     }
 
+    if (sessionInfo.countdownInterval) {
+      clearInterval(sessionInfo.countdownInterval);
+      sessionInfo.countdownInterval = null;
+    }
+
     if (playerId === sessionInfo.player1Id) {
       sessionInfo.player1Connected = false;
       this.logger.info(`Player 1 (${playerId}) disconnected from match ${matchId}`);
@@ -151,6 +158,7 @@ export default class GameSession {
 
     const countdownInterval = setInterval(() => {
       const sessionInfo = this.gameSessions.get(matchId);
+      this.gameSessions.get(matchId)!.countdownInterval = countdownInterval;
       if (!sessionInfo || !sessionInfo.player1Connected || !sessionInfo.player2Connected) {
         clearInterval(countdownInterval);
 
