@@ -290,10 +290,10 @@ export default class GameSession {
   private startCountdown(matchId: number): void {
     let countdown = 3;
 
-    const countdownInterval = setInterval(() => {
+    const countdownIntervalId = setInterval(() => {
       const sessionInfo = this.gameSessions.get(matchId);
       if (!sessionInfo || !sessionInfo.player1Connected || !sessionInfo.player2Connected) {
-        clearInterval(countdownInterval);
+        clearInterval(countdownIntervalId);
 
         if (sessionInfo) {
           sessionInfo.countdownStarted = false;
@@ -312,14 +312,14 @@ export default class GameSession {
       countdown -= 1;
 
       if (countdown < 0) {
-        clearInterval(countdownInterval);
+        clearInterval(countdownIntervalId);
         this.startGame(matchId);
       }
     }, 1000);
 
     const session = this.gameSessions.get(matchId);
     if (!session) return;
-    session.countdownIntervalId = countdownInterval;
+    session.countdownIntervalId = countdownIntervalId;
   }
 
   private startGame(matchId: number): void {
