@@ -2,6 +2,7 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table, { TableType } from './Table.js';
 import Racket from './Racket.js';
+import { BaseLogger } from 'pino';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -17,6 +18,7 @@ export default class GameSpace {
     private readonly tablePlayer2: Table,
     private readonly racket1: Racket,
     private readonly racket2: Racket,
+    private readonly logger: BaseLogger,
   ) {
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
@@ -107,12 +109,12 @@ export default class GameSpace {
     }
   }
 
-  // 게임 시작 메서드 추가
   private startGame() {
     this.gameStarted = true;
+
     // 원래 중력 복원
     this.world.gravity.copy(this.originalGravity);
-    console.log('게임 시작: 중력 활성화됨');
+    this.logger.info('게임 시작: 중력 활성화됨');
   }
 
   private getOtherBody(ballBody: CANNON.Body, bodyA: CANNON.Body, bodyB: CANNON.Body) {
