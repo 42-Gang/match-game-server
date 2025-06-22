@@ -74,16 +74,4 @@ export default class Ball {
   getLastTableCollisionTime(): number {
     return this.lastTableCollisionTime;
   }
-
-  hasCollidedWithRacketRecently(timeThreshold: number, currentTime: number): boolean {
-    return (
-      this.lastRacketCollisionTime > 0 && currentTime - this.lastRacketCollisionTime < timeThreshold
-    );
-  }
-
-  hasCollidedWithTableRecently(timeThreshold: number, currentTime: number): boolean {
-    return (
-      this.lastTableCollisionTime > 0 && currentTime - this.lastTableCollisionTime < timeThreshold
-    );
-  }
 }

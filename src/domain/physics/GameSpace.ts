@@ -19,7 +19,6 @@ export default class GameSpace {
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
 
-    // 두 개의 테이블을 세계에 추가
     this.world.addBody(tablePlayer1.body);
     this.world.addBody(tablePlayer2.body);
     this.world.addBody(ball.body);
@@ -164,13 +163,5 @@ export default class GameSpace {
       lastRacketCollisionTime: this.ball.getLastRacketCollisionTime(),
       lastTableCollisionTime: this.ball.getLastTableCollisionTime(),
     };
-  }
-
-  hasCollidedWithTableRecently(timeThreshold: number = 0.1): boolean {
-    return this.ball.hasCollidedWithTableRecently(timeThreshold, this.gameTime);
-  }
-
-  hasCollidedWithRacketRecently(timeThreshold: number = 0.1): boolean {
-    return this.ball.hasCollidedWithRacketRecently(timeThreshold, this.gameTime);
   }
 }
