@@ -288,7 +288,14 @@ export default class GameSession {
   }
 
   private startCountdown(matchId: number): void {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) {
+      this.logger.error(`GameSession: Game space for match ID ${matchId} not found.`);
+      return;
+    }
+
     let countdown = 3;
+    sessionInfo.countdownStarted = true;
 
     const countdownIntervalId = setInterval(() => {
       const sessionInfo = this.gameSessions.get(matchId);
@@ -298,7 +305,6 @@ export default class GameSession {
         if (sessionInfo) {
           sessionInfo.countdownStarted = false;
         }
-
         this.logger.info(`Countdown cancelled for match ${matchId}: Player disconnected`);
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.COUNTDOWN_CANCELLED);
         return;
@@ -308,7 +314,6 @@ export default class GameSession {
         .to(`match:${matchId}`)
         .emit(MATCH_SOCKET_EVENTS.COUNTDOWN, socketCountDownSchema.parse({ count: countdown }));
       this.logger.info(`Countdown for match ${matchId}: ${countdown}`);
-
       countdown -= 1;
 
       if (countdown < 0) {
@@ -317,9 +322,7 @@ export default class GameSession {
       }
     }, 1000);
 
-    const session = this.gameSessions.get(matchId);
-    if (!session) return;
-    session.countdownIntervalId = countdownIntervalId;
+    sessionInfo.countdownIntervalId = countdownIntervalId;
   }
 
   private startGame(matchId: number): void {
