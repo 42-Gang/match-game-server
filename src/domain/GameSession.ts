@@ -123,7 +123,7 @@ export default class GameSession {
     }
 
     if (sessionInfo.waitingTimeoutId) {
-      clearTimeout(sessionInfo.waitingTimeoutId);
+      clearInterval(sessionInfo.waitingTimeoutId);
       sessionInfo.waitingTimeoutId = null;
     }
 
