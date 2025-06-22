@@ -7,6 +7,7 @@ import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { playerTypeSchema } from './game.schema.js';
 import { Logger } from 'pino';
 import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
+import { socketMatchTimeoutSchema } from '../network/schemas/match-timout.socket.schema.js';
 
 interface GameSessionInfo {
   gameSpace: GameSpace;
@@ -17,10 +18,14 @@ interface GameSessionInfo {
   isGameStarted: boolean;
   countdownStarted: boolean;
   countdownInterval: NodeJS.Timeout | null;
+  waitingTimeoutId: NodeJS.Timeout | null;
+  playerWaitingTime: number;
 }
 
 export default class GameSession {
   private readonly gameSessions: Map<number, GameSessionInfo>;
+  private readonly PLAYER_WAITING_TIMEOUT = 30 * 1000;
+  private readonly INITIAL_WAITING_TIMEOUT = 120 * 1000; // 120초 (2분) - 조정 가능
 
   constructor(
     private readonly io: Server,
@@ -50,7 +55,7 @@ export default class GameSession {
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
 
         if (gameSpace.getBallPosition().y <= 0) {
-          // clearInterval(timer);
+          this.cleanupMatchSession(matchId);
           this.gameSessions.delete(matchId);
         }
       }
@@ -83,6 +88,8 @@ export default class GameSession {
       isGameStarted: false,
       countdownStarted: false,
       countdownInterval: null,
+      waitingTimeoutId: this.startInitialWaitingTimeout(input.matchId),
+      playerWaitingTime: 0,
     });
   }
 
@@ -115,6 +122,18 @@ export default class GameSession {
       this.logger.info(`Player 2 (${playerId}) connected to match ${matchId}`);
     }
 
+    if (sessionInfo.waitingTimeoutId) {
+      clearTimeout(sessionInfo.waitingTimeoutId);
+      sessionInfo.waitingTimeoutId = null;
+    }
+
+    if (
+      (sessionInfo.player1Connected && !sessionInfo.player2Connected) ||
+      (!sessionInfo.player1Connected && sessionInfo.player2Connected)
+    ) {
+      sessionInfo.waitingTimeoutId = this.startSinglePlayerWaitingTimeout(matchId);
+    }
+
     this.checkAndStartCountdown(matchId);
   }
 
@@ -127,6 +146,7 @@ export default class GameSession {
     if (sessionInfo.countdownInterval) {
       clearInterval(sessionInfo.countdownInterval);
       sessionInfo.countdownInterval = null;
+      sessionInfo.countdownStarted = false;
     }
 
     if (playerId === sessionInfo.player1Id) {
@@ -136,6 +156,120 @@ export default class GameSession {
       sessionInfo.player2Connected = false;
       this.logger.info(`Player 2 (${playerId}) disconnected from match ${matchId}`);
     }
+
+    if (sessionInfo.isGameStarted) {
+      return;
+    }
+
+    if (sessionInfo.waitingTimeoutId) {
+      clearTimeout(sessionInfo.waitingTimeoutId);
+      sessionInfo.waitingTimeoutId = null;
+    }
+
+    if (sessionInfo.player1Connected || sessionInfo.player2Connected) {
+      sessionInfo.waitingTimeoutId = this.startSinglePlayerWaitingTimeout(matchId);
+      return;
+    }
+    sessionInfo.waitingTimeoutId = this.startEmptySessionCleanupTimeout(matchId);
+  }
+
+  private startInitialWaitingTimeout(matchId: number): NodeJS.Timeout {
+    return setTimeout(() => {
+      const sessionInfo = this.gameSessions.get(matchId);
+      if (!sessionInfo) return;
+
+      // 아무 플레이어도 접속하지 않은 경우 세션 정리
+      if (!sessionInfo.player1Connected && !sessionInfo.player2Connected) {
+        this.logger.info(
+          `Match ${matchId} timed out: No players connected within ${this.INITIAL_WAITING_TIMEOUT / 1000} seconds`,
+        );
+        this.cleanupMatchSession(matchId);
+      }
+    }, this.INITIAL_WAITING_TIMEOUT);
+  }
+
+  private startSinglePlayerWaitingTimeout(matchId: number): NodeJS.Timeout {
+    this.logger.info(`Starting single player waiting timeout for match ${matchId}`);
+
+    return setInterval(() => {
+      const sessionInfo = this.gameSessions.get(matchId);
+      if (!sessionInfo) {
+        this.logger.error(`GameSession: Game space for match ID ${matchId} not found.`);
+        return;
+      }
+
+      sessionInfo.playerWaitingTime += 1;
+
+      this.logger.info(sessionInfo.playerWaitingTime, 'Checking player waiting time for match:');
+      this.logger.info(this.PLAYER_WAITING_TIMEOUT, 'seconds');
+      if (sessionInfo.playerWaitingTime * 1000 < this.PLAYER_WAITING_TIMEOUT) {
+        const waitingForPlayerId = sessionInfo.player1Connected
+          ? sessionInfo.player2Id
+          : sessionInfo.player1Id;
+        this.logger.info(
+          `Waiting for player ${waitingForPlayerId} in match ${matchId}. Current waiting time: ${sessionInfo.playerWaitingTime} seconds`,
+        );
+
+        this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.WAITING_FOR_PLAYER, {
+          waitingForPlayerId,
+          currentWaitingTimeInSeconds: sessionInfo.playerWaitingTime,
+          timeoutInSeconds: this.PLAYER_WAITING_TIMEOUT / 1000,
+        });
+        return;
+      }
+
+      if (
+        (sessionInfo.player1Connected && !sessionInfo.player2Connected) ||
+        (!sessionInfo.player1Connected && sessionInfo.player2Connected)
+      ) {
+        const missingPlayerId = sessionInfo.player1Connected
+          ? sessionInfo.player2Id
+          : sessionInfo.player1Id;
+
+        this.logger.info(
+          `Match ${matchId} timed out: Waiting for player ${missingPlayerId} exceeded ${this.PLAYER_WAITING_TIMEOUT / 1000} seconds`,
+        );
+        this.io.to(`match:${matchId}`).emit(
+          MATCH_SOCKET_EVENTS.MATCH_TIMEOUT,
+          socketMatchTimeoutSchema.parse({
+            missingPlayerId,
+            waitingTimeInSeconds: this.PLAYER_WAITING_TIMEOUT / 1000,
+            reason: `Player ${missingPlayerId} did not connect within the time limit`,
+          }),
+        );
+
+        this.cleanupMatchSession(matchId);
+      }
+    }, 1000);
+  }
+
+  private startEmptySessionCleanupTimeout(matchId: number): NodeJS.Timeout {
+    return setTimeout(() => {
+      const sessionInfo = this.gameSessions.get(matchId);
+      if (!sessionInfo) return;
+
+      if (!sessionInfo.player1Connected && !sessionInfo.player2Connected) {
+        this.logger.info(
+          `Match ${matchId} cleanup: All players disconnected for ${this.PLAYER_WAITING_TIMEOUT / 1000} seconds`,
+        );
+        this.cleanupMatchSession(matchId);
+      }
+    }, this.PLAYER_WAITING_TIMEOUT);
+  }
+
+  private cleanupMatchSession(matchId: number): void {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) return;
+
+    if (sessionInfo.waitingTimeoutId) {
+      clearTimeout(sessionInfo.waitingTimeoutId);
+    }
+    if (sessionInfo.countdownInterval) {
+      clearInterval(sessionInfo.countdownInterval);
+    }
+
+    this.gameSessions.delete(matchId);
+    this.logger.info(`Match session ${matchId} has been cleaned up`);
   }
 
   private checkAndStartCountdown(matchId: number): void {
@@ -158,7 +292,6 @@ export default class GameSession {
 
     const countdownInterval = setInterval(() => {
       const sessionInfo = this.gameSessions.get(matchId);
-      this.gameSessions.get(matchId)!.countdownInterval = countdownInterval;
       if (!sessionInfo || !sessionInfo.player1Connected || !sessionInfo.player2Connected) {
         clearInterval(countdownInterval);
 
@@ -183,6 +316,10 @@ export default class GameSession {
         this.startGame(matchId);
       }
     }, 1000);
+
+    const session = this.gameSessions.get(matchId);
+    if (!session) return;
+    session.countdownInterval = countdownInterval;
   }
 
   private startGame(matchId: number): void {
