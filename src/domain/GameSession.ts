@@ -17,9 +17,9 @@ interface GameSessionInfo {
   player2Id: number;
   isGameStarted: boolean;
   countdownStarted: boolean;
-  countdownInterval: NodeJS.Timeout | null;
-  waitingTimeoutId: NodeJS.Timeout | null;
-  playerWaitingTime: number;
+  countdownIntervalId: NodeJS.Timeout | null;
+  waitingIntervalId: NodeJS.Timeout | null;
+  playerWaitedTime: number;
 }
 
 export default class GameSession {
@@ -87,9 +87,9 @@ export default class GameSession {
       player2Id: input.player2Id,
       isGameStarted: false,
       countdownStarted: false,
-      countdownInterval: null,
-      waitingTimeoutId: this.startInitialWaitingTimeout(input.matchId),
-      playerWaitingTime: 0,
+      countdownIntervalId: null,
+      waitingIntervalId: this.startInitialWaitingTimeout(input.matchId),
+      playerWaitedTime: 0,
     });
   }
 
@@ -122,16 +122,16 @@ export default class GameSession {
       this.logger.info(`Player 2 (${playerId}) connected to match ${matchId}`);
     }
 
-    if (sessionInfo.waitingTimeoutId) {
-      clearInterval(sessionInfo.waitingTimeoutId);
-      sessionInfo.waitingTimeoutId = null;
+    if (sessionInfo.waitingIntervalId) {
+      clearInterval(sessionInfo.waitingIntervalId);
+      sessionInfo.waitingIntervalId = null;
     }
 
     if (
       (sessionInfo.player1Connected && !sessionInfo.player2Connected) ||
       (!sessionInfo.player1Connected && sessionInfo.player2Connected)
     ) {
-      sessionInfo.waitingTimeoutId = this.startSinglePlayerWaitingTimeout(matchId);
+      sessionInfo.waitingIntervalId = this.startSinglePlayerWaitingInterval(matchId);
     }
 
     this.checkAndStartCountdown(matchId);
@@ -143,9 +143,9 @@ export default class GameSession {
       return;
     }
 
-    if (sessionInfo.countdownInterval) {
-      clearInterval(sessionInfo.countdownInterval);
-      sessionInfo.countdownInterval = null;
+    if (sessionInfo.countdownIntervalId) {
+      clearInterval(sessionInfo.countdownIntervalId);
+      sessionInfo.countdownIntervalId = null;
       sessionInfo.countdownStarted = false;
     }
 
@@ -161,16 +161,16 @@ export default class GameSession {
       return;
     }
 
-    if (sessionInfo.waitingTimeoutId) {
-      clearTimeout(sessionInfo.waitingTimeoutId);
-      sessionInfo.waitingTimeoutId = null;
+    if (sessionInfo.waitingIntervalId) {
+      clearInterval(sessionInfo.waitingIntervalId);
+      sessionInfo.waitingIntervalId = null;
     }
 
     if (sessionInfo.player1Connected || sessionInfo.player2Connected) {
-      sessionInfo.waitingTimeoutId = this.startSinglePlayerWaitingTimeout(matchId);
+      sessionInfo.waitingIntervalId = this.startSinglePlayerWaitingInterval(matchId);
       return;
     }
-    sessionInfo.waitingTimeoutId = this.startEmptySessionCleanupTimeout(matchId);
+    sessionInfo.waitingIntervalId = this.startEmptySessionCleanupTimeout(matchId);
   }
 
   private startInitialWaitingTimeout(matchId: number): NodeJS.Timeout {
@@ -188,7 +188,7 @@ export default class GameSession {
     }, this.INITIAL_WAITING_TIMEOUT);
   }
 
-  private startSinglePlayerWaitingTimeout(matchId: number): NodeJS.Timeout {
+  private startSinglePlayerWaitingInterval(matchId: number): NodeJS.Timeout {
     this.logger.info(`Starting single player waiting timeout for match ${matchId}`);
 
     return setInterval(() => {
@@ -198,21 +198,21 @@ export default class GameSession {
         return;
       }
 
-      sessionInfo.playerWaitingTime += 1;
+      sessionInfo.playerWaitedTime += 1;
 
-      this.logger.info(sessionInfo.playerWaitingTime, 'Checking player waiting time for match:');
+      this.logger.info(sessionInfo.playerWaitedTime, 'Checking player waiting time for match:');
       this.logger.info(this.PLAYER_WAITING_TIMEOUT, 'seconds');
-      if (sessionInfo.playerWaitingTime * 1000 < this.PLAYER_WAITING_TIMEOUT) {
+      if (sessionInfo.playerWaitedTime * 1000 < this.PLAYER_WAITING_TIMEOUT) {
         const waitingForPlayerId = sessionInfo.player1Connected
           ? sessionInfo.player2Id
           : sessionInfo.player1Id;
         this.logger.info(
-          `Waiting for player ${waitingForPlayerId} in match ${matchId}. Current waiting time: ${sessionInfo.playerWaitingTime} seconds`,
+          `Waiting for player ${waitingForPlayerId} in match ${matchId}. Current waiting time: ${sessionInfo.playerWaitedTime} seconds`,
         );
 
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.WAITING_FOR_PLAYER, {
           waitingForPlayerId,
-          currentWaitingTimeInSeconds: sessionInfo.playerWaitingTime,
+          currentWaitingTimeInSeconds: sessionInfo.playerWaitedTime,
           timeoutInSeconds: this.PLAYER_WAITING_TIMEOUT / 1000,
         });
         return;
@@ -261,11 +261,11 @@ export default class GameSession {
     const sessionInfo = this.gameSessions.get(matchId);
     if (!sessionInfo) return;
 
-    if (sessionInfo.waitingTimeoutId) {
-      clearTimeout(sessionInfo.waitingTimeoutId);
+    if (sessionInfo.waitingIntervalId) {
+      clearTimeout(sessionInfo.waitingIntervalId);
     }
-    if (sessionInfo.countdownInterval) {
-      clearInterval(sessionInfo.countdownInterval);
+    if (sessionInfo.countdownIntervalId) {
+      clearInterval(sessionInfo.countdownIntervalId);
     }
 
     this.gameSessions.delete(matchId);
@@ -319,7 +319,7 @@ export default class GameSession {
 
     const session = this.gameSessions.get(matchId);
     if (!session) return;
-    session.countdownInterval = countdownInterval;
+    session.countdownIntervalId = countdownInterval;
   }
 
   private startGame(matchId: number): void {
