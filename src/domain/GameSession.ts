@@ -25,7 +25,8 @@ interface GameSessionInfo {
 export default class GameSession {
   private readonly gameSessions: Map<number, GameSessionInfo>;
   private readonly PLAYER_WAITING_TIMEOUT = 30 * 1000;
-  private readonly INITIAL_WAITING_TIMEOUT = 120 * 1000; // 120초 (2분) - 조정 가능
+  private readonly INITIAL_WAITING_TIMEOUT = 120 * 1000;
+  private readonly COUNTDOWN_SECONDS = 3;
 
   constructor(
     private readonly io: Server,
@@ -288,7 +289,7 @@ export default class GameSession {
       return;
     }
 
-    let countdown = 3;
+    let countdown = this.COUNTDOWN_SECONDS;
     sessionInfo.countdownStarted = true;
 
     const countdownIntervalId = setInterval(() => {
