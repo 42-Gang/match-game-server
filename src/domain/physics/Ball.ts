@@ -22,8 +22,8 @@ export default class Ball {
   }
 
   reset() {
-    // y 값을 0.8에서 1.0으로 조정하여 채와 비슷한 높이에 위치시킴
-    this.body.position.set(1, 1.0, 0); // 채와 같은 높이로 조정
+    // 공의 시작 위치를 라켓 위치로 설정
+    this.body.position.set(1, 1.0, 0);
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
 
