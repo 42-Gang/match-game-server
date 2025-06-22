@@ -1,6 +1,6 @@
 import GameSpace from './physics/GameSpace.js';
 import Ball from './physics/Ball.js';
-import Table from './physics/Table.js';
+import Table, { TableType } from './physics/Table.js';
 import Racket from './physics/Racket.js';
 import { Server } from 'socket.io';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
@@ -75,10 +75,12 @@ export default class GameSession {
     this.logger.info(`Creating game space for match ID ${input.matchId}`);
 
     const ball = new Ball();
-    const table = new Table();
+    // 두 개의 테이블 생성 (플레이어 1, 플레이어 2 측)
+    const tablePlayer1 = new Table(TableType.PLAYER1);
+    const tablePlayer2 = new Table(TableType.PLAYER2);
     const racket1 = new Racket(input.player1Id, playerTypeSchema.enum.PLAYER1);
     const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER2);
-    const gameSpace = new GameSpace(ball, table, racket1, racket2);
+    const gameSpace = new GameSpace(ball, tablePlayer1, tablePlayer2, racket1, racket2);
 
     this.gameSessions.set(input.matchId, {
       gameSpace,
