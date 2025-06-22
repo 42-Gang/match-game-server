@@ -196,9 +196,6 @@ export default class GameSession {
       }
 
       sessionInfo.playerWaitedTime += 1;
-
-      this.logger.info(sessionInfo.playerWaitedTime, 'Checking player waiting time for match:');
-      this.logger.info(this.PLAYER_WAITING_TIMEOUT, 'seconds');
       if (sessionInfo.playerWaitedTime * 1000 < this.PLAYER_WAITING_TIMEOUT) {
         const waitingForPlayerId = sessionInfo.player1Connected
           ? sessionInfo.player2Id
