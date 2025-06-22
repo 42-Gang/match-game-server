@@ -55,12 +55,25 @@ export default class GameSession {
         };
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
 
+        this.logger.debug(gameSpace.getBallCollisionData(), 'BallCollisionData:');
+        this.logger.debug(gameSpace.getBallLastRacketPlayerId(), 'LastRacketPlayerId:');
+        this.logger.debug(gameSpace.getBallLastTableType(), 'LastTableType:');
+
         if (gameSpace.getBallPosition().y <= 0) {
           this.cleanupMatchSession(matchId);
           this.gameSessions.delete(matchId);
         }
       }
     }, intervalMs);
+  }
+
+  getPlayerIds(matchId: number): number[] {
+    const sessionInfo = this.gameSessions.get(matchId);
+    if (!sessionInfo) {
+      this.logger.error(`GameSession: Game space for match ID ${matchId} not found.`);
+      throw new Error(`GameSession: Game space for match ID ${matchId} not found.`);
+    }
+    return [sessionInfo.player1Id, sessionInfo.player2Id];
   }
 
   createGameSpace(input: {

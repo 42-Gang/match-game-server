@@ -1,4 +1,5 @@
 import { Socket } from 'socket.io';
+import GameSession from '../domain/GameSession.js';
 
 type NextFunction = (err?: Error) => void;
 
@@ -20,7 +21,11 @@ export async function matchMiddleware(socket: Socket, next: NextFunction) {
       return next(new Error('Invalid match ID'));
     }
 
-    // TODO: Add logic to check if the user is a participant in the match
+    const gameSession: GameSession =
+      socket.nsp.server.diContainer.resolve<GameSession>('gameSession');
+    if (!gameSession.getPlayerIds(parsedMatchId).includes(userId)) {
+      return next(new Error(`User ${userId} is not part of match ${parsedMatchId}`));
+    }
 
     socket.data.matchId = parsedMatchId;
     next();
