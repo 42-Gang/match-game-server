@@ -2,6 +2,7 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table, { TableType } from './Table.js';
 import Racket from './Racket.js';
+import { Body } from 'objects/Body';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -59,47 +60,50 @@ export default class GameSpace {
     this.world.addContactMaterial(racket2ContactMaterial);
 
     // 충돌 이벤트 리스너 설정
-    this.setupCollisionListeners();
-  }
-
-  private setupCollisionListeners() {
-    // 충돌 시작 이벤트
     this.world.addEventListener(
       'beginContact',
-      (event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) => {
-        const { bodyA, bodyB } = event;
-
-        // Ball과 Racket 충돌 감지
-        if (
-          bodyA === this.ball.body &&
-          (bodyB === this.racket1.body || bodyB === this.racket2.body)
-        ) {
-          const racket = bodyB === this.racket1.body ? this.racket1 : this.racket2;
-          this.ball.recordRacketCollision(racket.getPlayerId(), this.gameTime);
-        } else if (
-          bodyB === this.ball.body &&
-          (bodyA === this.racket1.body || bodyA === this.racket2.body)
-        ) {
-          const racket = bodyA === this.racket1.body ? this.racket1 : this.racket2;
-          this.ball.recordRacketCollision(racket.getPlayerId(), this.gameTime);
-        }
-
-        // Ball과 Table 충돌 감지
-        if (
-          bodyA === this.ball.body &&
-          (bodyB === this.tablePlayer1.body || bodyB === this.tablePlayer2.body)
-        ) {
-          const table = bodyB === this.tablePlayer1.body ? this.tablePlayer1 : this.tablePlayer2;
-          this.ball.recordTableCollision(table.getTableType(), this.gameTime);
-        } else if (
-          bodyB === this.ball.body &&
-          (bodyA === this.tablePlayer1.body || bodyA === this.tablePlayer2.body)
-        ) {
-          const table = bodyA === this.tablePlayer1.body ? this.tablePlayer1 : this.tablePlayer2;
-          this.ball.recordTableCollision(table.getTableType(), this.gameTime);
-        }
-      },
+      (event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) => this.collisionListeners(event),
     );
+  }
+
+  private collisionListeners(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
+    const { bodyA, bodyB } = event;
+    const ballBody = this.ball.body;
+
+    const racketMap = new Map<CANNON.Body, Racket>([
+      [this.racket1.body, this.racket1],
+      [this.racket2.body, this.racket2],
+    ]);
+    const tableMap = new Map<CANNON.Body, Table>([
+      [this.tablePlayer1.body, this.tablePlayer1],
+      [this.tablePlayer2.body, this.tablePlayer2],
+    ]);
+
+    const otherBody = this.getOtherBody(ballBody, bodyA, bodyB);
+    if (!otherBody) {
+      return;
+    }
+
+    const racket = racketMap.get(otherBody);
+    if (racket) {
+      this.ball.recordRacketCollision(racket.getPlayerId(), this.gameTime);
+      return;
+    }
+
+    const table = tableMap.get(otherBody);
+    if (table) {
+      this.ball.recordTableCollision(table.getTableType(), this.gameTime);
+      return;
+    }
+  }
+
+  private getOtherBody(ballBody: Body, bodyA: Body, bodyB: Body) {
+    if (bodyA === ballBody) {
+      return bodyB;
+    } else if (bodyB === ballBody) {
+      return bodyA;
+    }
+    return null; // 볼과 관련 없는 충돌
   }
 
   step(dt: number) {
