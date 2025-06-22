@@ -262,7 +262,7 @@ export default class GameSession {
     if (!sessionInfo) return;
 
     if (sessionInfo.waitingIntervalId) {
-      clearTimeout(sessionInfo.waitingIntervalId);
+      clearInterval(sessionInfo.waitingIntervalId);
     }
     if (sessionInfo.countdownIntervalId) {
       clearInterval(sessionInfo.countdownIntervalId);
