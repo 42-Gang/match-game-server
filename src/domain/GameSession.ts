@@ -54,10 +54,9 @@ export default class GameSession {
           racket2: gameSpace.getRacket2Position(),
         };
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
-
-        this.logger.debug(gameSpace.getBallCollisionData(), 'BallCollisionData:');
-        this.logger.debug(gameSpace.getBallLastRacketPlayerId(), 'LastRacketPlayerId:');
-        this.logger.debug(gameSpace.getBallLastTableType(), 'LastTableType:');
+        this.logger.info(gameSpace.getBallCollisionData(), 'BallCollisionData:');
+        this.logger.info(gameSpace.getBallLastRacketPlayerId(), 'LastRacketPlayerId:');
+        this.logger.info(gameSpace.getBallLastTableType(), 'LastTableType:');
 
         if (gameSpace.getBallPosition().y <= 0) {
           this.cleanupMatchSession(matchId);
