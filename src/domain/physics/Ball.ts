@@ -22,7 +22,8 @@ export default class Ball {
   }
 
   reset() {
-    this.body.position.set(1, 1.5, 0); // x=0, y=0.8m, z=0 (탁구대 중앙 상공)
+    // 공의 시작 위치를 라켓 위치로 설정
+    this.body.position.set(1, 1.0, 0);
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
 

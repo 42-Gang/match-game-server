@@ -2,12 +2,15 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table, { TableType } from './Table.js';
 import Racket from './Racket.js';
+import { BaseLogger } from 'pino';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.81, 0),
   });
   private gameTime: number = 0;
+  private gameStarted: boolean = false;
+  private originalGravity: CANNON.Vec3;
 
   constructor(
     private readonly ball: Ball,
@@ -15,9 +18,14 @@ export default class GameSpace {
     private readonly tablePlayer2: Table,
     private readonly racket1: Racket,
     private readonly racket2: Racket,
+    private readonly logger: BaseLogger,
   ) {
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
+    this.originalGravity = this.world.gravity.clone();
+
+    // 게임 시작 전에는 중력을 0으로 설정
+    this.world.gravity.set(0, 0, 0);
 
     this.world.addBody(tablePlayer1.body);
     this.world.addBody(tablePlayer2.body);
@@ -86,6 +94,11 @@ export default class GameSpace {
     const racket = racketMap.get(otherBody);
     if (racket) {
       this.ball.recordRacketCollision(racket.getPlayerId(), this.gameTime);
+
+      // 게임이 아직 시작되지 않았으면 지금 시작
+      if (!this.gameStarted) {
+        this.startGame();
+      }
       return;
     }
 
@@ -94,6 +107,14 @@ export default class GameSpace {
       this.ball.recordTableCollision(table.getTableType(), this.gameTime);
       return;
     }
+  }
+
+  private startGame() {
+    this.gameStarted = true;
+
+    // 원래 중력 복원
+    this.world.gravity.copy(this.originalGravity);
+    this.logger.info('게임 시작: 중력 활성화됨');
   }
 
   private getOtherBody(ballBody: CANNON.Body, bodyA: CANNON.Body, bodyB: CANNON.Body) {
