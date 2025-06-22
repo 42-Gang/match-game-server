@@ -62,6 +62,7 @@ export default class GameSession {
         if (gameSpace.getBallPosition().y <= 0) {
           this.cleanupMatchSession(matchId);
           this.gameSessions.delete(matchId);
+          this.io.to(`match:${matchId}`).disconnectSockets();
         }
       }
     }, intervalMs);
