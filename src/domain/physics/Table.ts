@@ -13,7 +13,7 @@ export default class Table {
     tableType: TableType,
     halfWidth = 1.5 / 2, // 0.7625m
     halfThickness = 0.5, // 상판 두께
-    halfLength = 3 / 4, // 테이블 길이 반으로 분할 (원래 3/2 였던 것을 절반인 3/4로)
+    halfLength = 1.5 / 4, // 테이블 길이 반으로 분할
   ) {
     this.tableType = tableType;
     const material = new CANNON.Material(`table${tableType}Material`);
