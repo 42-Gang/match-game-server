@@ -127,10 +127,7 @@ export default class GameSession {
       sessionInfo.waitingIntervalId = null;
     }
 
-    if (
-      (sessionInfo.player1Connected && !sessionInfo.player2Connected) ||
-      (!sessionInfo.player1Connected && sessionInfo.player2Connected)
-    ) {
+    if (sessionInfo.player1Connected !== sessionInfo.player2Connected) {
       sessionInfo.waitingIntervalId = this.startSinglePlayerWaitingInterval(matchId);
     }
 
