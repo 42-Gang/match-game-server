@@ -5,6 +5,7 @@ import { matchMiddleware } from './match.middleware.js';
 import GameSession from '../domain/GameSession.js';
 import { MATCH_SOCKET_EVENTS } from './match.event.js';
 import { socketPlayerIdSchema } from './schemas/player-id.socket.schema.js';
+import { socketErrorHandler } from './utils/errorHandler.js';
 
 export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
   io.use(socketMiddleware);
@@ -30,14 +31,18 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
     socket
       .to(`match:${matchId}`)
       .emit(MATCH_SOCKET_EVENTS.PLAYER_CONNECTED, socketPlayerIdSchema.parse({ playerId }));
-    socket.on(MATCH_SOCKET_EVENTS.RACKET, (data) => {
-      const { x, y, z } = data;
-      if (!gameSession.isExist(matchId)) {
-        logger.error(`Match ${matchId} does not exist for player ${playerId}`);
-        return;
-      }
-      gameSession.updateRacketPosition(matchId, playerId, x, y, z);
-    });
+
+    socket.on(
+      MATCH_SOCKET_EVENTS.RACKET,
+      socketErrorHandler(socket, logger, (data: { x: number; y: number; z: number }) => {
+        const { x, y, z } = data;
+        if (!gameSession.isExist(matchId)) {
+          logger.error(`Match ${matchId} does not exist for player ${playerId}`);
+          throw new Error(`Match ${matchId} does not exist`);
+        }
+        gameSession.updateRacketPosition(matchId, playerId, x, y, z);
+      }),
+    );
 
     socket.on('disconnect', () => {
       logger.info(`User ${playerId} disconnected from match ${matchId}`);
