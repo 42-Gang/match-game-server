@@ -6,7 +6,7 @@ export default class Racket {
 
   constructor(
     private readonly playerId: number,
-    playerType: PlayerType,
+    _playerType: PlayerType,
   ) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
