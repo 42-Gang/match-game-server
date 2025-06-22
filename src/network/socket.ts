@@ -34,7 +34,7 @@ export const registerSocket = (diContainer: AwilixContainer, io: Server) => {
       const { x, y, z } = data;
       if (!gameSession.isExist(matchId)) {
         logger.error(`Match ${matchId} does not exist for player ${playerId}`);
-        throw new Error(`Match ${matchId} does not exist for player ${playerId}`);
+        return;
       }
       gameSession.updateRacketPosition(matchId, playerId, x, y, z);
     });
