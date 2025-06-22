@@ -2,7 +2,6 @@ import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
 import Table, { TableType } from './Table.js';
 import Racket from './Racket.js';
-import { Body } from 'objects/Body';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -97,7 +96,7 @@ export default class GameSpace {
     }
   }
 
-  private getOtherBody(ballBody: Body, bodyA: Body, bodyB: Body) {
+  private getOtherBody(ballBody: CANNON.Body, bodyA: CANNON.Body, bodyB: CANNON.Body) {
     if (bodyA === ballBody) {
       return bodyB;
     } else if (bodyB === ballBody) {
