@@ -297,9 +297,6 @@ export default class GameSession {
       if (!sessionInfo || !sessionInfo.player1Connected || !sessionInfo.player2Connected) {
         clearInterval(countdownIntervalId);
 
-        if (sessionInfo) {
-          sessionInfo.countdownStarted = false;
-        }
         this.logger.info(`Countdown cancelled for match ${matchId}: Player disconnected`);
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.COUNTDOWN_CANCELLED);
         return;
