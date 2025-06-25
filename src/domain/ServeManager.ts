@@ -5,20 +5,24 @@ interface PointResultDto {
   scoringPlayer: PlayerType;
   player1Score: number;
   player2Score: number;
+  firstServe?: boolean; // 첫 서브 여부
 }
 
 export class ServeManager {
-  private isFirst = true;
   private server: PlayerType;
 
   constructor(private readonly logger: BaseLogger) {
     this.server = playerTypeSchema.enum.PLAYER1;
   }
 
-  getNextServer({ scoringPlayer, player1Score, player2Score }: PointResultDto): PlayerType {
+  getNextServer({
+    scoringPlayer,
+    player1Score,
+    player2Score,
+    firstServe,
+  }: PointResultDto): PlayerType {
     // 첫 서브 상황
-    if (this.isFirst) {
-      this.isFirst = false;
+    if (firstServe) {
       this.server = scoringPlayer;
       this.logger.info(`First serve completed. Serving player: ${this.server}`);
       return this.server;
