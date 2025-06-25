@@ -18,13 +18,11 @@ export default class Score {
   }
 
   isGameOver(): boolean {
-    if (this.player1score < 10 && this.player2score < 10) {
-      return false;
+    if (11 <= this.player1score || 11 <= this.player2score) {
+      return 2 <= Math.abs(this.player1score - this.player2score);
     }
-    if (Math.abs(this.player1score - this.player2score) < 2) {
-      return false;
-    }
-    return true;
+
+    return false;
   }
 
   getWinner(): PlayerType {
