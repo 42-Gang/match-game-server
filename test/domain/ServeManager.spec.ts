@@ -55,6 +55,30 @@ it('첫 랠리의 승자가 PLAYER1일 경우, 서브권자는 PLAYER1으로 유
   expect(serveManager.getServingPlayer()).toBe(PLAYER1);
 });
 
+describe('듀스 상황', () => {
+  it('두 플레이어의 점수가 모두 10점 이상일 때 서브권이 전환되어야 한다', () => {
+    serveManager.updateServer({
+      scoringPlayer: PLAYER1,
+      player1score: 0,
+      player2score: 0,
+    });
+
+    serveManager.updateServer({
+      scoringPlayer: PLAYER1,
+      player1score: 10,
+      player2score: 10,
+    });
+    expect(serveManager.getServingPlayer()).toBe(PLAYER2);
+
+    serveManager.updateServer({
+      scoringPlayer: PLAYER2,
+      player1score: 10,
+      player2score: 11,
+    });
+    expect(serveManager.getServingPlayer()).toBe(PLAYER1);
+  });
+});
+
 describe('첫 서브 이후의 서브권 전환', () => {
   it('매 2점마다 서브권이 전환되어야 한다', () => {
     serveManager.updateServer({
