@@ -3,8 +3,8 @@ import { BaseLogger } from 'pino';
 
 interface PointResultDto {
   scoringPlayer: PlayerType;
-  player1Score: number;
-  player2Score: number;
+  player1score: number;
+  player2score: number;
   firstServe?: boolean; // 첫 서브 여부
 }
 
@@ -17,8 +17,8 @@ export class ServeManager {
 
   getNextServer({
     scoringPlayer,
-    player1Score,
-    player2Score,
+    player1score,
+    player2score,
     firstServe,
   }: PointResultDto): PlayerType {
     // 첫 서브 상황
@@ -29,14 +29,14 @@ export class ServeManager {
     }
 
     // 듀스 상황
-    if (10 <= player1Score && 10 <= player2Score) {
+    if (10 <= player1score && 10 <= player2score) {
       this.server = this.getOpposite(this.server);
       this.logger.info(`Deuce, serve switched to ${this.server}`);
       return this.server;
     }
 
     // 일반적인 상황
-    const totalScore = player1Score + player2Score;
+    const totalScore = player1score + player2score;
     if (totalScore % 2 === 0) {
       this.server = this.getOpposite(this.server);
       this.logger.info(`Serve switched to ${this.server}`);
