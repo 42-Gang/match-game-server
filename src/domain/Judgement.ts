@@ -85,7 +85,7 @@ export default class Judgement {
   private onFloorHit(data: CollisionData): void {
     const { lastHitRacket, currentHitTable } = data;
 
-    // 경우 1: 라켓에 맞지 않고 바닥에 닿은 경우 (서브 실패 등)
+    // 경우 1: 라켓에 맞지 않고 바닥에 닿은 경우 (서브 실패 등 / 예외 상황)
     if (lastHitRacket === null) {
       const server = this.serveManager.getServingPlayer();
       let scoringPlayer: PlayerType | null = null;
