@@ -40,7 +40,6 @@ it('첫 랠리의 승자가 PLAYER2일 경우, 서브권자는 PLAYER2가 되어
     scoringPlayer: PLAYER2,
     player1score: 0,
     player2score: 0,
-    firstServe: true,
   });
 
   expect(serveManager.getServingPlayer()).toBe(PLAYER2);
@@ -51,7 +50,6 @@ it('첫 랠리의 승자가 PLAYER1일 경우, 서브권자는 PLAYER1으로 유
     scoringPlayer: PLAYER1,
     player1score: 0,
     player2score: 0,
-    firstServe: true,
   });
 
   expect(serveManager.getServingPlayer()).toBe(PLAYER1);
@@ -63,7 +61,6 @@ describe('첫 서브 이후의 서브권 전환', () => {
       scoringPlayer: PLAYER1,
       player1score: 0,
       player2score: 0,
-      firstServe: true,
     }); // 서브 게임
     expect(serveManager.getServingPlayer()).toBe(PLAYER1);
 
@@ -88,7 +85,6 @@ describe('첫 서브 이후의 서브권 전환', () => {
       scoringPlayer: PLAYER1,
       player1score: 0,
       player2score: 0,
-      firstServe: true,
     }); // 서브 게임
     expect(serveManager.getServingPlayer()).toBe(PLAYER1);
 
