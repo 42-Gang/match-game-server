@@ -16,7 +16,7 @@ export class ServeManager {
     this.firstServe = true;
   }
 
-  getNextServer({ scoringPlayer, player1score, player2score }: PointResultDto): PlayerType {
+  updateServer({ scoringPlayer, player1score, player2score }: PointResultDto): PlayerType {
     // 첫 서브 상황
     if (this.firstServe) {
       this.server = scoringPlayer;

@@ -36,7 +36,7 @@ it('초기 서브권자는 PLAYER1으로 설정되어야 한다', () => {
 });
 
 it('첫 랠리의 승자가 PLAYER2일 경우, 서브권자는 PLAYER2가 되어야 한다', () => {
-  serveManager.getNextServer({
+  serveManager.updateServer({
     scoringPlayer: PLAYER2,
     player1score: 0,
     player2score: 0,
@@ -46,7 +46,7 @@ it('첫 랠리의 승자가 PLAYER2일 경우, 서브권자는 PLAYER2가 되어
 });
 
 it('첫 랠리의 승자가 PLAYER1일 경우, 서브권자는 PLAYER1으로 유지되어야 한다', () => {
-  serveManager.getNextServer({
+  serveManager.updateServer({
     scoringPlayer: PLAYER1,
     player1score: 0,
     player2score: 0,
@@ -57,20 +57,20 @@ it('첫 랠리의 승자가 PLAYER1일 경우, 서브권자는 PLAYER1으로 유
 
 describe('첫 서브 이후의 서브권 전환', () => {
   it('매 2점마다 서브권이 전환되어야 한다', () => {
-    serveManager.getNextServer({
+    serveManager.updateServer({
       scoringPlayer: PLAYER1,
       player1score: 0,
       player2score: 0,
     }); // 서브 게임
     expect(serveManager.getServingPlayer()).toBe(PLAYER1);
 
-    serveManager.getNextServer({
+    serveManager.updateServer({
       // PLAYER2 득점
       scoringPlayer: PLAYER2,
       player1score: 0,
       player2score: 1,
     });
-    serveManager.getNextServer({
+    serveManager.updateServer({
       // PLAYER2 득점
       scoringPlayer: PLAYER2,
       player1score: 0,
@@ -81,20 +81,20 @@ describe('첫 서브 이후의 서브권 전환', () => {
   });
 
   it('누가 득점했는지와 관계없이 서브권이 올바르게 전환되어야 한다', () => {
-    serveManager.getNextServer({
+    serveManager.updateServer({
       scoringPlayer: PLAYER1,
       player1score: 0,
       player2score: 0,
     }); // 서브 게임
     expect(serveManager.getServingPlayer()).toBe(PLAYER1);
 
-    serveManager.getNextServer({
+    serveManager.updateServer({
       // PLAYER2 득점
       scoringPlayer: PLAYER1,
       player1score: 1,
       player2score: 0,
     });
-    serveManager.getNextServer({
+    serveManager.updateServer({
       // PLAYER2 득점
       scoringPlayer: PLAYER2,
       player1score: 1,
