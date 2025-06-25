@@ -44,6 +44,11 @@ export class ServeManager {
     return this.server;
   }
 
+  // 첫 서브 게임 여부를 반환하는 메서드 추가
+  isFirstServe(): boolean {
+    return this.firstServe;
+  }
+
   getServingPlayer(): PlayerType {
     return this.server;
   }
