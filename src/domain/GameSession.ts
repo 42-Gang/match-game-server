@@ -8,6 +8,7 @@ import { playerTypeSchema } from './game.schema.js';
 import { Logger } from 'pino';
 import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
 import { socketMatchTimeoutSchema } from '../network/schemas/match-timout.socket.schema.js';
+import Judgement from './Judgement.js';
 
 interface GameSessionInfo {
   gameSpace: GameSpace;
@@ -55,13 +56,12 @@ export default class GameSession {
         };
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
         this.logger.debug(gameSpace.getBallCollisionData(), 'BallCollisionData:');
-        this.logger.debug(gameSpace.getBallLastRacketPlayerId(), 'LastRacketPlayerId:');
-        this.logger.debug(gameSpace.getBallLastTableType(), 'LastTableType:');
 
         if (gameSpace.getBallPosition().y <= 0) {
-          this.cleanupMatchSession(matchId);
-          this.gameSessions.delete(matchId);
-          this.io.to(`match:${matchId}`).disconnectSockets();
+          gameSpace.reset();
+          // this.cleanupMatchSession(matchId);
+          // this.gameSessions.delete(matchId);
+          // this.io.to(`match:${matchId}`).disconnectSockets();
         }
       }
     }, intervalMs);
@@ -93,6 +93,7 @@ export default class GameSession {
     const tablePlayer2 = new Table(TableType.PLAYER2);
     const racket1 = new Racket(input.player1Id, playerTypeSchema.enum.PLAYER1);
     const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER2);
+    const judgement = new Judgement(input.player1Id, input.player2Id, this.logger);
     const gameSpace = new GameSpace(
       ball,
       tablePlayer1,
@@ -100,6 +101,7 @@ export default class GameSession {
       racket1,
       racket2,
       this.logger,
+      judgement,
     );
 
     this.gameSessions.set(input.matchId, {

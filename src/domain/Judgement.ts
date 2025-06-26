@@ -7,6 +7,7 @@ import { ServeManager } from './ServeManager.js';
 
 export const judgementResult = z.object({
   gameOver: z.boolean().default(false), // 게임이 종료되었는지
+  roundOver: z.boolean().default(false), // 라운드가 종료되었는지
   winner: playerTypeSchema.nullable(), // 게임 우승자 (게임이 종료된 경우만 값이 존재)
   score: scoreSchema, // 현재 스코어
   nextServingPlayer: playerTypeSchema.optional(), // 서브권을 가진 플레이어
@@ -61,10 +62,10 @@ export default class Judgement {
     return this.createResult();
   }
 
-  private onTableHit(data: CollisionData): void {
+  private onTableHit(data: CollisionData): boolean {
     const { currentHitTable, previousHitTable } = data;
     if (currentHitTable !== previousHitTable || currentHitTable === null) {
-      return;
+      return false;
     }
 
     const scoringMap: Record<TableType, PlayerType> = {
@@ -76,10 +77,11 @@ export default class Judgement {
 
     if (!scoringPlayer) {
       this.logger.warn({ data }, 'Could not determine scoring player from table hit.');
-      return;
+      return false;
     }
 
     this.updateState(scoringPlayer);
+    return true;
   }
 
   private onFloorHit(data: CollisionData): void {
@@ -161,6 +163,7 @@ export default class Judgement {
     if (this.scoreManager.isGameOver()) {
       return {
         gameOver: true,
+        roundOver: true,
         winner: this.scoreManager.getWinner(),
         score: this.scoreManager.getScoreDto(),
       };

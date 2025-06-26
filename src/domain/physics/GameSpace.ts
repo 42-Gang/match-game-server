@@ -3,6 +3,7 @@ import Ball from './Ball.js';
 import Table, { TableType } from './Table.js';
 import Racket from './Racket.js';
 import { BaseLogger } from 'pino';
+import Judgement, { CollisionTarget } from '../Judgement.js';
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
@@ -19,6 +20,7 @@ export default class GameSpace {
     private readonly racket1: Racket,
     private readonly racket2: Racket,
     private readonly logger: BaseLogger,
+    private readonly judgement: Judgement,
   ) {
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
@@ -73,6 +75,15 @@ export default class GameSpace {
     );
   }
 
+  reset() {
+    this.gameTime = 0;
+    this.gameStarted = false;
+
+    this.logger.info('게임 공간 초기화: 중력 복원됨');
+    this.world.gravity.set(0, 0, 0);
+    this.ball.reset();
+  }
+
   private collisionListeners(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
     const { bodyA, bodyB } = event;
     const ballBody = this.ball.body;
@@ -93,9 +104,8 @@ export default class GameSpace {
 
     const racket = racketMap.get(otherBody);
     if (racket) {
-      this.ball.recordRacketCollision(racket.getPlayerId(), this.gameTime);
+      this.ball.recordRacketCollision(racket.getPlayerId());
 
-      // 게임이 아직 시작되지 않았으면 지금 시작
       if (!this.gameStarted) {
         this.startGame();
       }
@@ -104,7 +114,17 @@ export default class GameSpace {
 
     const table = tableMap.get(otherBody);
     if (table) {
-      this.ball.recordTableCollision(table.getTableType(), this.gameTime);
+      this.ball.recordTableCollision(table.getTableType());
+      const judgeResult = this.judgement.judgeCollision({
+        target: CollisionTarget.TABLE,
+        lastHitRacket: this.ball.getLastRacketPlayerId(),
+        currentHitTable: this.ball.getCurrentHitTable(),
+        previousHitTable: this.ball.getPreviousHitTable(),
+      });
+      this.logger.debug(judgeResult, '충돌 판정 결과');
+      if (judgeResult.gameOver) {
+        this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+      }
       return;
     }
   }
@@ -129,6 +149,19 @@ export default class GameSpace {
   step(dt: number) {
     this.gameTime += dt;
     this.world.step(dt, dt, 10);
+
+    if (this.ball.getY() == 0) {
+      const judgeResult = this.judgement.judgeCollision({
+        target: CollisionTarget.FLOOR,
+        lastHitRacket: this.ball.getLastRacketPlayerId(),
+        currentHitTable: this.ball.getCurrentHitTable(),
+        previousHitTable: this.ball.getPreviousHitTable(),
+      });
+      this.logger.debug(judgeResult, '충돌 판정 결과');
+      if (judgeResult.gameOver) {
+        this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+      }
+    }
   }
 
   getBallPosition(): CANNON.Vec3 {
@@ -176,16 +209,14 @@ export default class GameSpace {
   }
 
   getBallLastTableType(): TableType | null {
-    return this.ball.getLastTableType();
+    return this.ball.getCurrentHitTable();
   }
 
   getBallCollisionData() {
     return {
       lastRacketPlayerId: this.ball.getLastRacketPlayerId(),
-      lastTableType: this.ball.getLastTableType(),
-      lastCollisionTime: this.ball.getLastCollisionTime(),
-      lastRacketCollisionTime: this.ball.getLastRacketCollisionTime(),
-      lastTableCollisionTime: this.ball.getLastTableCollisionTime(),
+      currentHitTable: this.ball.getCurrentHitTable(),
+      previousHitTable: this.ball.getPreviousHitTable(),
     };
   }
 }
