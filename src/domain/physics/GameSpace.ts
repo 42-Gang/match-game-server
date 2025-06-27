@@ -103,11 +103,6 @@ export default class GameSpace {
     this.status = GameStatus.STANDBY;
     this.world.gravity.set(0, 0, 0);
 
-    // 1. 공 리셋 (내부적으로 위치도 설정됨)
-    this.ball.reset(player);
-
-    // 2. 라켓들도 겹치지 않는 안전한 초기 위치로 강제 이동
-    //    (Racket 클래스에 setPosition 같은 메서드가 있다고 가정)
     const racket1InitialPos = new CANNON.Vec3(2, 0.8, 0); // 예시 위치
     const racket2InitialPos = new CANNON.Vec3(-2, 0.8, 0); // 예시 위치
 
@@ -119,6 +114,8 @@ export default class GameSpace {
     this.racket2.body.velocity.set(0, 0, 0);
     this.racket2.body.angularVelocity.set(0, 0, 0);
 
+    this.ball.reset(player);
+    this.ball.body.sleep();
     this.logger.info('게임 공간이 모든 객체와 함께 초기화되었습니다.');
   }
 
@@ -184,10 +181,6 @@ export default class GameSpace {
     }
     const clampedZ = this.clamp(z, -1.5, 1.5);
     racket.updatePositionTest(clampedX, y, clampedZ);
-  }
-
-  isGameReadyOrPlaying(): boolean {
-    return this.status === GameStatus.READY || this.status === GameStatus.PLAYING;
   }
 
   prepareForNextRound(nextServingPlayer: PlayerType) {
@@ -282,5 +275,13 @@ export default class GameSpace {
     }
 
     throw new Error(`Player with ID ${playerId} does not have a racket.`);
+  }
+
+  isGameReadyOrPlaying(): boolean {
+    return this.status === GameStatus.READY || this.status === GameStatus.PLAYING;
+  }
+
+  isGamePlaying(): boolean {
+    return this.status === GameStatus.PLAYING;
   }
 }

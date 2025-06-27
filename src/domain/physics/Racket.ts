@@ -16,7 +16,7 @@ export default class Racket {
     });
     this.body.sleepState = CANNON.Body.AWAKE;
 
-    const tiltAngle = 20 * Math.PI;
+    const tiltAngle = (20 * Math.PI) / 180;
     const xAxis = new CANNON.Vec3(0, 0, -1);
     this.body.quaternion.setFromAxisAngle(xAxis, tiltAngle);
   }
