@@ -3,7 +3,7 @@ import Ball from './Ball.js';
 import Table from './Table.js';
 import Racket from './Racket.js';
 import { BaseLogger } from 'pino';
-import Judgement, { CollisionTarget } from '../Judgement.js';
+import Judgement, { CollisionTarget, JudgementResult } from '../Judgement.js';
 import { MATCH_SOCKET_EVENTS } from '../../network/match.event.js';
 import { socketCountDownSchema } from '../../network/schemas/count-down.socket.schema.js';
 import { BroadcastOperator, DefaultEventsMap } from 'socket.io';
@@ -135,17 +135,7 @@ export default class GameSpace {
       });
       this.logger.debug(judgeResult, '충돌 판정 결과 (바닥)');
 
-      if (judgeResult.roundOver) {
-        if (!judgeResult.nextServingPlayer)
-          throw new Error('다음 서빙 플레이어가 지정되지 않았습니다.');
-        this.prepareForNextRound(judgeResult.nextServingPlayer);
-        return;
-      }
-
-      if (judgeResult.gameOver) {
-        this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
-        this.status = GameStatus.GAME_OVER;
-      }
+      this.processRoundResult(judgeResult);
     }
   }
 
@@ -205,6 +195,20 @@ export default class GameSpace {
     this.startCountDown();
   }
 
+  private processRoundResult(judgeResult: JudgementResult) {
+    if (judgeResult.roundOver) {
+      if (!judgeResult.nextServingPlayer)
+        throw new Error('다음 서빙 플레이어가 지정되지 않았습니다.');
+      this.prepareForNextRound(judgeResult.nextServingPlayer);
+      return;
+    }
+
+    if (judgeResult.gameOver) {
+      this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+      this.status = GameStatus.GAME_OVER;
+    }
+  }
+
   private collisionListeners(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
     const { bodyA, bodyB } = event;
     const ballBody = this.ball.body;
@@ -243,11 +247,7 @@ export default class GameSpace {
         previousHitTable: this.ball.getPreviousHitTable(),
       });
       this.logger.debug(judgeResult, '충돌 판정 결과 (테이블)');
-      if (judgeResult.roundOver) {
-        if (!judgeResult.nextServingPlayer)
-          throw new Error('다음 서빙 플레이어가 지정되지 않았습니다.');
-        this.prepareForNextRound(judgeResult.nextServingPlayer);
-      }
+      this.processRoundResult(judgeResult);
       return;
     }
   }
