@@ -24,12 +24,6 @@ export enum GameStatus {
   GAME_OVER, // 게임이 종료된 상태 (세션 정리 필요)
 }
 
-export enum StepResult {
-  CONTINUE, // 게임 계속 진행
-  ROUND_OVER, // 현재 라운드 종료 (다음 라운드 준비)
-  GAME_OVER, // 게임 전체 종료 (세션 정리 필요)
-}
-
 export default class GameSpace {
   private readonly COUNTDOWN_SECONDS: number = 3;
 
@@ -128,7 +122,7 @@ export default class GameSpace {
     this.logger.info('게임 공간이 모든 객체와 함께 초기화되었습니다.');
   }
 
-  step(dt: number): StepResult {
+  step(dt: number): void {
     this.world.step(dt, dt, 10);
 
     if (this.ball.getY() <= 0) {
@@ -145,7 +139,7 @@ export default class GameSpace {
         if (judgeResult.nextServingPlayer) {
           this.startCountDown(judgeResult.nextServingPlayer);
         }
-        return StepResult.ROUND_OVER;
+        return;
       }
 
       if (judgeResult.gameOver) {
@@ -153,14 +147,6 @@ export default class GameSpace {
         this.status = GameStatus.GAME_OVER;
       }
     }
-
-    if (this.status === GameStatus.ROUND_OVER) {
-      return StepResult.ROUND_OVER;
-    }
-    if (this.status === GameStatus.GAME_OVER) {
-      return StepResult.GAME_OVER;
-    }
-    return StepResult.CONTINUE;
   }
 
   startCountDown(player: PlayerType) {

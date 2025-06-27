@@ -1,4 +1,4 @@
-import GameSpace, { StepResult } from './physics/GameSpace.js';
+import GameSpace from './physics/GameSpace.js';
 import Ball from './physics/Ball.js';
 import Table, { TableType } from './physics/Table.js';
 import Racket from './physics/Racket.js';
@@ -39,7 +39,7 @@ export default class GameSession {
     const intervalMs = fixedTimeStep * 1000;
 
     this.logger.info(`Game session started with fixed time step: ${fixedTimeStep} seconds`);
-    const interval = setInterval(() => {
+    setInterval(() => {
       for (const [matchId, sessionInfo] of this.gameSessions.entries()) {
         const gameSpace = sessionInfo.gameSpace;
         this.io
@@ -47,17 +47,7 @@ export default class GameSession {
           .emit(MATCH_SOCKET_EVENTS.GAME_STATE, gameSpace.getGameObjectsPositions());
         if (!sessionInfo.gameSpace.isGameReadyOrPlaying()) continue;
 
-        const stepResult = gameSpace.step(fixedTimeStep);
-        if (stepResult === StepResult.ROUND_OVER) {
-          this.logger.info(`Round over for match ${matchId}`);
-          // gameSpace.startCountDown();
-          return;
-        }
-        if (stepResult === StepResult.GAME_OVER) {
-          this.logger.info(`Game over for match ${matchId}`);
-          // TODO: 게임 종료 관련 로직 처리 (예: 점수 기록, 통계 업데이트 등)
-          clearInterval(interval);
-        }
+        gameSpace.step(fixedTimeStep);
       }
     }, intervalMs);
   }
