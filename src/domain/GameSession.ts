@@ -149,7 +149,7 @@ export default class GameSession {
 
     if (sessionInfo.player1Connected && sessionInfo.player2Connected) {
       this.logger.info(`Both players connected for match ${matchId}. Starting countdown.`);
-      sessionInfo.gameSpace.startCountDown(playerTypeSchema.enum.PLAYER1);
+      sessionInfo.gameSpace.prepareForNextRound(playerTypeSchema.enum.PLAYER1);
     }
   }
 

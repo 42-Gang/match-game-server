@@ -136,9 +136,9 @@ export default class GameSpace {
       this.logger.debug(judgeResult, '충돌 판정 결과 (바닥)');
 
       if (judgeResult.roundOver) {
-        if (judgeResult.nextServingPlayer) {
-          this.startCountDown(judgeResult.nextServingPlayer);
-        }
+        if (!judgeResult.nextServingPlayer)
+          throw new Error('다음 서빙 플레이어가 지정되지 않았습니다.');
+        this.prepareForNextRound(judgeResult.nextServingPlayer);
         return;
       }
 
@@ -149,10 +149,9 @@ export default class GameSpace {
     }
   }
 
-  startCountDown(player: PlayerType) {
+  startCountDown() {
     this.status = GameStatus.COUNTDOWN;
     let countdown = this.COUNTDOWN_SECONDS;
-    this.reset(player);
 
     const countdownIntervalId = setInterval(() => {
       this.logger.info(`게임 시작까지 ${countdown}초 남았습니다.`);
@@ -201,6 +200,11 @@ export default class GameSpace {
     return this.status === GameStatus.READY || this.status === GameStatus.PLAYING;
   }
 
+  prepareForNextRound(nextServingPlayer: PlayerType) {
+    this.reset(nextServingPlayer);
+    this.startCountDown();
+  }
+
   private collisionListeners(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
     const { bodyA, bodyB } = event;
     const ballBody = this.ball.body;
@@ -240,9 +244,9 @@ export default class GameSpace {
       });
       this.logger.debug(judgeResult, '충돌 판정 결과 (테이블)');
       if (judgeResult.roundOver) {
-        if (judgeResult.nextServingPlayer) {
-          this.startCountDown(judgeResult.nextServingPlayer); // 게임 종료 후 초기화
-        }
+        if (!judgeResult.nextServingPlayer)
+          throw new Error('다음 서빙 플레이어가 지정되지 않았습니다.');
+        this.prepareForNextRound(judgeResult.nextServingPlayer);
       }
       return;
     }
