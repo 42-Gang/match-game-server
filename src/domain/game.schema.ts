@@ -19,8 +19,8 @@ export const gameObjectsPositionsSchema = z.object({
 export type GameObjectsPositionsType = TypeOf<typeof gameObjectsPositionsSchema>;
 
 export const scoreSchema = z.object({
-  player1score: z.number(),
-  player2score: z.number(),
+  player1Score: z.number(),
+  player2Score: z.number(),
 });
 export type ScoreDto = TypeOf<typeof scoreSchema>;
 

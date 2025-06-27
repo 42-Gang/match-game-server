@@ -13,11 +13,11 @@ export class ScoreManager {
 
   update(scoringPlayer: PlayerType): void {
     const dto = this.current.toScoreDto();
-    let { player1score, player2score } = dto;
-    if (scoringPlayer === playerTypeSchema.enum.PLAYER1) player1score++;
-    if (scoringPlayer === playerTypeSchema.enum.PLAYER2) player2score++;
+    let { player1Score, player2Score } = dto;
+    if (scoringPlayer === playerTypeSchema.enum.PLAYER1) player1Score++;
+    if (scoringPlayer === playerTypeSchema.enum.PLAYER2) player2Score++;
 
-    const newScore = new Score(player1score, player2score);
+    const newScore = new Score(player1Score, player2Score);
     this.scores.addScore(newScore);
     this.current = newScore;
   }

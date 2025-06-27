@@ -30,8 +30,8 @@ it('초기 상태: 점수 0-0, 서브 플레이어 PLAYER1', () => {
     target: CollisionTarget.TABLE,
   };
   const result = judgement.judgeCollision(noCollision);
-  expect(result.score.player1score).toBe(0);
-  expect(result.score.player2score).toBe(0);
+  expect(result.score.player1Score).toBe(0);
+  expect(result.score.player2Score).toBe(0);
   expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER1);
   expect(result.gameOver).toBe(false);
   expect(result.winner).toBeNull();
@@ -47,8 +47,8 @@ describe('서브 게임 관련', () => {
     };
 
     const result = judgement.judgeCollision(collision);
-    expect(result.score.player1score).toBe(0);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(0);
+    expect(result.score.player2Score).toBe(0);
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER1);
     expect(result.gameOver).toBe(false);
   });
@@ -62,8 +62,8 @@ describe('서브 게임 관련', () => {
     };
 
     const result = judgement.judgeCollision(collision);
-    expect(result.score.player1score).toBe(0);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(0);
+    expect(result.score.player2Score).toBe(0);
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER2);
     expect(result.gameOver).toBe(false);
   });
@@ -77,8 +77,8 @@ describe('서브 게임 관련', () => {
     };
 
     const result = judgement.judgeCollision(collision);
-    expect(result.score.player1score).toBe(0);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(0);
+    expect(result.score.player2Score).toBe(0);
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER1);
     expect(result.gameOver).toBe(false);
   });
@@ -92,8 +92,8 @@ describe('서브 게임 관련', () => {
     };
 
     const result = judgement.judgeCollision(collision);
-    expect(result.score.player1score).toBe(0);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(0);
+    expect(result.score.player2Score).toBe(0);
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER2);
     expect(result.gameOver).toBe(false);
   });
@@ -112,8 +112,8 @@ describe('게임 종료 관련', () => {
       judgement.judgeCollision(collision);
     }
     const result = judgement.judgeCollision(collision);
-    expect(result.score.player1score).toBe(11);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(11);
+    expect(result.score.player2Score).toBe(0);
     expect(result.gameOver).toBe(true);
     expect(result.winner).toBe(playerTypeSchema.enum.PLAYER1);
   });
@@ -159,8 +159,8 @@ describe('첫 랠리 (서브권 결정)', () => {
     const result = judgement.judgeCollision(collision);
 
     // 새로운 규칙: 점수는 그대로
-    expect(result.score.player1score).toBe(0);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(0);
+    expect(result.score.player2Score).toBe(0);
     // 서브권만 P1에게 넘어감
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER1);
     expect(result.gameOver).toBe(false);
@@ -176,8 +176,8 @@ describe('첫 랠리 (서브권 결정)', () => {
 
     const result = judgement.judgeCollision(collision);
 
-    expect(result.score.player1score).toBe(0);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(0);
+    expect(result.score.player2Score).toBe(0);
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER2);
   });
 });
@@ -204,8 +204,8 @@ describe('일반 득점 (두 번째 랠리부터)', () => {
       previousHitTable: null,
     });
 
-    expect(result.score.player1score).toBe(1);
-    expect(result.score.player2score).toBe(0);
+    expect(result.score.player1Score).toBe(1);
+    expect(result.score.player2Score).toBe(0);
     expect(result.nextServingPlayer).toBe(playerTypeSchema.enum.PLAYER1); // 1점 득점 후 서브권 유지
   });
 });
@@ -229,9 +229,9 @@ describe('게임 종료 관련', () => {
       playPoint(playerTypeSchema.enum.PLAYER1);
     }
 
-    const result = judgement['createResult']();
-    expect(result.score.player1score).toBe(11);
-    expect(result.score.player2score).toBe(0);
+    const result = judgement['createResult'](false);
+    expect(result.score.player1Score).toBe(11);
+    expect(result.score.player2Score).toBe(0);
     expect(result.gameOver).toBe(true);
     expect(result.winner).toBe(playerTypeSchema.enum.PLAYER1);
   });

@@ -12,8 +12,8 @@ export default class Score {
 
   toScoreDto(): ScoreDto {
     return {
-      player1score: this.player1score,
-      player2score: this.player2score,
+      player1Score: this.player1score,
+      player2Score: this.player2score,
     };
   }
 

@@ -192,6 +192,12 @@ export default class GameSpace {
     if (judgeResult.roundOver) {
       if (!judgeResult.nextServingPlayer)
         throw new Error('다음 서빙 플레이어가 지정되지 않았습니다.');
+
+      const { player1Score, player2Score } = judgeResult.score;
+      this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, {
+        player1Score,
+        player2Score,
+      });
       this.prepareForNextRound(judgeResult.nextServingPlayer);
       return;
     }
@@ -199,6 +205,7 @@ export default class GameSpace {
     if (judgeResult.gameOver) {
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
       this.status = GameStatus.GAME_OVER;
+      return;
     }
   }
 

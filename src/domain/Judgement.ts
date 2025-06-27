@@ -142,8 +142,8 @@ export default class Judgement {
       this.logger.info(`First serve game: ${scoringPlayer} won the serve right`);
       this.serveManager.updateServer({
         scoringPlayer,
-        player1score: 0,
-        player2score: 0,
+        player1Score: 0,
+        player2Score: 0,
       });
       return;
     }
@@ -154,11 +154,11 @@ export default class Judgement {
 
     this.serveManager.updateServer({
       scoringPlayer,
-      player1score: scoreDto.player1score,
-      player2score: scoreDto.player2score,
+      player1Score: scoreDto.player1Score,
+      player2Score: scoreDto.player2Score,
     });
 
-    this.logger.info(`Score updated: P1=${scoreDto.player1score}, P2=${scoreDto.player2score}`);
+    this.logger.info(`Score updated: P1=${scoreDto.player1Score}, P2=${scoreDto.player2Score}`);
   }
 
   private createResult(roundOver: boolean): JudgementResult {
