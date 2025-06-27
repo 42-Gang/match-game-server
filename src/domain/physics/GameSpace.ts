@@ -205,6 +205,7 @@ export default class GameSpace {
     if (judgeResult.gameOver) {
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
       this.status = GameStatus.GAME_OVER;
+      // TODO: 게임 종료 관련 처리 로직 구현
       return;
     }
   }
