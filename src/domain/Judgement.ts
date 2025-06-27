@@ -51,6 +51,7 @@ export default class Judgement {
         break;
       case CollisionTarget.FLOOR:
         this.onFloorHit(data);
+        roundOver = true;
         break;
       default:
         this.logger.warn({ data }, 'Unknown collision target');
@@ -163,7 +164,7 @@ export default class Judgement {
   private createResult(roundOver: boolean): JudgementResult {
     if (this.scoreManager.isGameOver()) {
       return {
-        gameOver: true,
+        gameOver: this.scoreManager.isGameOver(),
         roundOver: true,
         winner: this.scoreManager.getWinner(),
         score: this.scoreManager.getScoreDto(),

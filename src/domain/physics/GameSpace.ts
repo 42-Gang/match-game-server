@@ -1,17 +1,44 @@
 import * as CANNON from 'cannon-es';
 import Ball from './Ball.js';
-import Table, { TableType } from './Table.js';
+import Table from './Table.js';
 import Racket from './Racket.js';
 import { BaseLogger } from 'pino';
 import Judgement, { CollisionTarget } from '../Judgement.js';
+import { MATCH_SOCKET_EVENTS } from '../../network/match.event.js';
+import { socketCountDownSchema } from '../../network/schemas/count-down.socket.schema.js';
+import { BroadcastOperator, DefaultEventsMap } from 'socket.io';
+import {
+  gameObjectsPositionsSchema,
+  GameObjectsPositionsType,
+  PlayerType,
+  playerTypeSchema,
+} from '../game.schema.js';
+
+export enum GameStatus {
+  WAITING_FOR_PLAYERS, // 두 유저가 모두 접속하지 않은 경우
+  STANDBY, // 게임이 시작되기 전 대기 상태
+  COUNTDOWN, // 라운드 시작 전 카운트다운
+  READY, // 카운트다운 후 준비 상태
+  PLAYING, // 실제 탁구 게임 진행 중
+  ROUND_OVER, // 한 라운드가 끝나고 점수 등을 표시하는 상태
+  GAME_OVER, // 게임이 종료된 상태 (세션 정리 필요)
+}
+
+export enum StepResult {
+  CONTINUE, // 게임 계속 진행
+  ROUND_OVER, // 현재 라운드 종료 (다음 라운드 준비)
+  GAME_OVER, // 게임 전체 종료 (세션 정리 필요)
+}
 
 export default class GameSpace {
+  private readonly COUNTDOWN_SECONDS: number = 3;
+
   private readonly world: CANNON.World = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.81, 0),
   });
-  private gameTime: number = 0;
-  private gameStarted: boolean = false;
-  private originalGravity: CANNON.Vec3;
+
+  private status: GameStatus = GameStatus.WAITING_FOR_PLAYERS;
+  private readonly originalGravity: CANNON.Vec3;
 
   constructor(
     private readonly ball: Ball,
@@ -21,10 +48,11 @@ export default class GameSpace {
     private readonly racket2: Racket,
     private readonly logger: BaseLogger,
     private readonly judgement: Judgement,
+    private readonly socketRoom: BroadcastOperator<DefaultEventsMap, unknown>,
   ) {
+    this.originalGravity = this.world.gravity.clone();
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
-    this.originalGravity = this.world.gravity.clone();
 
     // 게임 시작 전에는 중력을 0으로 설정
     this.world.gravity.set(0, 0, 0);
@@ -73,15 +101,118 @@ export default class GameSpace {
       'beginContact',
       (event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) => this.collisionListeners(event),
     );
+
+    this.reset(playerTypeSchema.enum.PLAYER1);
   }
 
-  reset() {
-    this.gameTime = 0;
-    this.gameStarted = false;
-
-    this.logger.info('게임 공간 초기화: 중력 복원됨');
+  reset(player: PlayerType) {
+    this.status = GameStatus.STANDBY;
     this.world.gravity.set(0, 0, 0);
-    this.ball.reset();
+
+    // 1. 공 리셋 (내부적으로 위치도 설정됨)
+    this.ball.reset(player);
+
+    // 2. 라켓들도 겹치지 않는 안전한 초기 위치로 강제 이동
+    //    (Racket 클래스에 setPosition 같은 메서드가 있다고 가정)
+    const racket1InitialPos = new CANNON.Vec3(2, 0.8, 0); // 예시 위치
+    const racket2InitialPos = new CANNON.Vec3(-2, 0.8, 0); // 예시 위치
+
+    this.racket1.body.position.copy(racket1InitialPos);
+    this.racket1.body.velocity.set(0, 0, 0);
+    this.racket1.body.angularVelocity.set(0, 0, 0);
+
+    this.racket2.body.position.copy(racket2InitialPos);
+    this.racket2.body.velocity.set(0, 0, 0);
+    this.racket2.body.angularVelocity.set(0, 0, 0);
+
+    this.logger.info('게임 공간이 모든 객체와 함께 초기화되었습니다.');
+  }
+
+  step(dt: number): StepResult {
+    this.world.step(dt, dt, 10);
+
+    if (this.ball.getY() <= 0) {
+      this.status = GameStatus.ROUND_OVER;
+      const judgeResult = this.judgement.judgeCollision({
+        target: CollisionTarget.FLOOR,
+        lastHitRacket: this.ball.getLastRacketPlayerId(),
+        currentHitTable: this.ball.getCurrentHitTable(),
+        previousHitTable: this.ball.getPreviousHitTable(),
+      });
+      this.logger.debug(judgeResult, '충돌 판정 결과 (바닥)');
+
+      if (judgeResult.roundOver) {
+        if (judgeResult.nextServingPlayer) {
+          this.startCountDown(judgeResult.nextServingPlayer);
+        }
+        return StepResult.ROUND_OVER;
+      }
+
+      if (judgeResult.gameOver) {
+        this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+        this.status = GameStatus.GAME_OVER;
+      }
+    }
+
+    if (this.status === GameStatus.ROUND_OVER) {
+      return StepResult.ROUND_OVER;
+    }
+    if (this.status === GameStatus.GAME_OVER) {
+      return StepResult.GAME_OVER;
+    }
+    return StepResult.CONTINUE;
+  }
+
+  startCountDown(player: PlayerType) {
+    this.status = GameStatus.COUNTDOWN;
+    let countdown = this.COUNTDOWN_SECONDS;
+    this.reset(player);
+
+    const countdownIntervalId = setInterval(() => {
+      this.logger.info(`게임 시작까지 ${countdown}초 남았습니다.`);
+
+      this.socketRoom.emit(
+        MATCH_SOCKET_EVENTS.COUNTDOWN,
+        socketCountDownSchema.parse({ count: countdown }),
+      );
+
+      if (countdown <= 0) {
+        this.status = GameStatus.READY;
+        clearInterval(countdownIntervalId);
+        return;
+      }
+      countdown -= 1;
+    }, 1000);
+  }
+
+  getGameObjectsPositions(): GameObjectsPositionsType {
+    return gameObjectsPositionsSchema.parse({
+      ball: this.ball.body.position.clone(),
+      racket1: this.racket1.getPosition(),
+      racket2: this.racket2.body.position.clone(),
+    });
+  }
+
+  updateRacketPosition(playerId: number, x: number, y: number, z: number) {
+    if (!this.isGameReadyOrPlaying()) {
+      // this.logger.warn(
+      //   `Player ${playerId} tried to update racket position while game is not in READY or PLAYING state.`,
+      // );
+      return;
+    }
+    const racket = this.getRacketByPlayerId(playerId);
+    let clampedX;
+    if (playerId === this.racket1.getPlayerId()) {
+      clampedX = this.clamp(x, 0, 2);
+    } else {
+      clampedX = this.clamp(x, -2, 0);
+    }
+    const clampedZ = this.clamp(z, -1.5, 1.5);
+    racket.updatePositionTest(clampedX, y, clampedZ);
+  }
+
+  isGameReadyOrPlaying(): boolean {
+    return this.status === GameStatus.READY || this.status === GameStatus.PLAYING;
   }
 
   private collisionListeners(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
@@ -106,7 +237,7 @@ export default class GameSpace {
     if (racket) {
       this.ball.recordRacketCollision(racket.getPlayerId());
 
-      if (!this.gameStarted) {
+      if (this.status === GameStatus.READY) {
         this.startGame();
       }
       return;
@@ -121,16 +252,18 @@ export default class GameSpace {
         currentHitTable: this.ball.getCurrentHitTable(),
         previousHitTable: this.ball.getPreviousHitTable(),
       });
-      this.logger.debug(judgeResult, '충돌 판정 결과');
-      if (judgeResult.gameOver) {
-        this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+      this.logger.debug(judgeResult, '충돌 판정 결과 (테이블)');
+      if (judgeResult.roundOver) {
+        if (judgeResult.nextServingPlayer) {
+          this.startCountDown(judgeResult.nextServingPlayer); // 게임 종료 후 초기화
+        }
       }
       return;
     }
   }
 
   private startGame() {
-    this.gameStarted = true;
+    this.status = GameStatus.PLAYING;
 
     // 원래 중력 복원
     this.world.gravity.copy(this.originalGravity);
@@ -146,50 +279,8 @@ export default class GameSpace {
     return null; // 볼과 관련 없는 충돌
   }
 
-  step(dt: number) {
-    this.gameTime += dt;
-    this.world.step(dt, dt, 10);
-
-    if (this.ball.getY() == 0) {
-      const judgeResult = this.judgement.judgeCollision({
-        target: CollisionTarget.FLOOR,
-        lastHitRacket: this.ball.getLastRacketPlayerId(),
-        currentHitTable: this.ball.getCurrentHitTable(),
-        previousHitTable: this.ball.getPreviousHitTable(),
-      });
-      this.logger.debug(judgeResult, '충돌 판정 결과');
-      if (judgeResult.gameOver) {
-        this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
-      }
-    }
-  }
-
-  getBallPosition(): CANNON.Vec3 {
-    return this.ball.body.position.clone();
-  }
-
-  getRacket1Position(): CANNON.Vec3 {
-    return this.racket1.getPosition();
-  }
-
-  getRacket2Position(): CANNON.Vec3 {
-    return this.racket2.body.position.clone();
-  }
-
   private clamp(value: number, min: number, max: number) {
     return Math.max(min, Math.min(value, max));
-  }
-
-  updateRacketPosition(playerId: number, x: number, y: number, z: number) {
-    const racket = this.getRacketByPlayerId(playerId);
-    let clampedX;
-    if (playerId === this.racket1.getPlayerId()) {
-      clampedX = this.clamp(x, 0, 2);
-    } else {
-      clampedX = this.clamp(x, -2, 0);
-    }
-    const clampedZ = this.clamp(z, -1.5, 1.5);
-    racket.updatePositionTest(clampedX, y, clampedZ);
   }
 
   private getRacketByPlayerId(playerId: number): Racket {
@@ -201,22 +292,5 @@ export default class GameSpace {
     }
 
     throw new Error(`Player with ID ${playerId} does not have a racket.`);
-  }
-
-  // 충돌 데이터 조회 메서드
-  getBallLastRacketPlayerId(): number | null {
-    return this.ball.getLastRacketPlayerId();
-  }
-
-  getBallLastTableType(): TableType | null {
-    return this.ball.getCurrentHitTable();
-  }
-
-  getBallCollisionData() {
-    return {
-      lastRacketPlayerId: this.ball.getLastRacketPlayerId(),
-      currentHitTable: this.ball.getCurrentHitTable(),
-      previousHitTable: this.ball.getPreviousHitTable(),
-    };
   }
 }

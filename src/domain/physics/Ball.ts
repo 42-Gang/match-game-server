@@ -1,5 +1,6 @@
 import * as CANNON from 'cannon-es';
 import { TableType } from './Table.js';
+import { PlayerType, playerTypeSchema } from '../game.schema.js';
 
 export default class Ball {
   public body: CANNON.Body;
@@ -15,14 +16,20 @@ export default class Ball {
       shape: new CANNON.Sphere(0.1), // 10cm 지름
       material,
     });
-    this.reset();
+    this.reset(playerTypeSchema.enum.PLAYER1); // 초기 위치 설정
   }
 
-  reset() {
+  reset(player: PlayerType) {
     // 공의 시작 위치를 라켓 위치로 설정
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
-    this.body.position.set(1, 1.0, 0);
+
+    if (player === playerTypeSchema.enum.PLAYER1) {
+      this.body.position.set(1, 1.0, 0);
+    }
+    if (player === playerTypeSchema.enum.PLAYER2) {
+      this.body.position.set(-1, 1.0, 0); // 플레이어 1의 시작 위치
+    }
 
     // 충돌 데이터 초기화
     this.lastRacketPlayerId = null;

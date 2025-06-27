@@ -1,4 +1,4 @@
-import GameSpace from './physics/GameSpace.js';
+import GameSpace, { StepResult } from './physics/GameSpace.js';
 import Ball from './physics/Ball.js';
 import Table, { TableType } from './physics/Table.js';
 import Racket from './physics/Racket.js';
@@ -6,7 +6,6 @@ import { Server } from 'socket.io';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { playerTypeSchema } from './game.schema.js';
 import { Logger } from 'pino';
-import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
 import { socketMatchTimeoutSchema } from '../network/schemas/match-timout.socket.schema.js';
 import Judgement from './Judgement.js';
 
@@ -17,7 +16,6 @@ interface GameSessionInfo {
   player1Id: number;
   player2Id: number;
   isGameStarted: boolean;
-  countdownStarted: boolean;
   countdownIntervalId: NodeJS.Timeout | null;
   waitingIntervalId: NodeJS.Timeout | null;
   playerWaitedTime: number;
@@ -27,7 +25,6 @@ export default class GameSession {
   private readonly gameSessions: Map<number, GameSessionInfo>;
   private readonly PLAYER_WAITING_TIMEOUT = 30 * 1000;
   private readonly INITIAL_WAITING_TIMEOUT = 120 * 1000;
-  private readonly COUNTDOWN_SECONDS = 3;
 
   constructor(
     private readonly io: Server,
@@ -42,26 +39,24 @@ export default class GameSession {
     const intervalMs = fixedTimeStep * 1000;
 
     this.logger.info(`Game session started with fixed time step: ${fixedTimeStep} seconds`);
-    setInterval(() => {
+    const interval = setInterval(() => {
       for (const [matchId, sessionInfo] of this.gameSessions.entries()) {
-        if (!sessionInfo.isGameStarted) continue;
-
         const gameSpace = sessionInfo.gameSpace;
-        gameSpace.step(fixedTimeStep);
+        this.io
+          .to(`match:${matchId}`)
+          .emit(MATCH_SOCKET_EVENTS.GAME_STATE, gameSpace.getGameObjectsPositions());
+        if (!sessionInfo.gameSpace.isGameReadyOrPlaying()) continue;
 
-        const message = {
-          ball: gameSpace.getBallPosition(),
-          racket1: gameSpace.getRacket1Position(),
-          racket2: gameSpace.getRacket2Position(),
-        };
-        this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_STATE, message);
-        this.logger.debug(gameSpace.getBallCollisionData(), 'BallCollisionData:');
-
-        if (gameSpace.getBallPosition().y <= 0) {
-          gameSpace.reset();
-          // this.cleanupMatchSession(matchId);
-          // this.gameSessions.delete(matchId);
-          // this.io.to(`match:${matchId}`).disconnectSockets();
+        const stepResult = gameSpace.step(fixedTimeStep);
+        if (stepResult === StepResult.ROUND_OVER) {
+          this.logger.info(`Round over for match ${matchId}`);
+          // gameSpace.startCountDown();
+          return;
+        }
+        if (stepResult === StepResult.GAME_OVER) {
+          this.logger.info(`Game over for match ${matchId}`);
+          // TODO: 게임 종료 관련 로직 처리 (예: 점수 기록, 통계 업데이트 등)
+          clearInterval(interval);
         }
       }
     }, intervalMs);
@@ -82,6 +77,7 @@ export default class GameSession {
     player1Id: number;
     player2Id: number;
   }) {
+    // TODO: awlix 등록하기
     if (this.isExist(input.matchId)) {
       throw new Error(`Game space for match ID ${input.matchId} already exists.`);
     }
@@ -102,6 +98,7 @@ export default class GameSession {
       racket2,
       this.logger,
       judgement,
+      this.io.to(`match:${input.matchId}`),
     );
 
     this.gameSessions.set(input.matchId, {
@@ -111,7 +108,6 @@ export default class GameSession {
       player1Id: input.player1Id,
       player2Id: input.player2Id,
       isGameStarted: false,
-      countdownStarted: false,
       countdownIntervalId: null,
       waitingIntervalId: this.startInitialWaitingTimeout(input.matchId),
       playerWaitedTime: 0,
@@ -142,7 +138,8 @@ export default class GameSession {
     if (playerId === sessionInfo.player1Id) {
       sessionInfo.player1Connected = true;
       this.logger.info(`Player 1 (${playerId}) connected to match ${matchId}`);
-    } else if (playerId === sessionInfo.player2Id) {
+    }
+    if (playerId === sessionInfo.player2Id) {
       sessionInfo.player2Connected = true;
       this.logger.info(`Player 2 (${playerId}) connected to match ${matchId}`);
     }
@@ -152,11 +149,20 @@ export default class GameSession {
       sessionInfo.waitingIntervalId = null;
     }
 
-    if (sessionInfo.player1Connected !== sessionInfo.player2Connected) {
+    this.logger.info(
+      `Players connection: Player 1: ${sessionInfo.player1Connected}, Player 2: ${sessionInfo.player2Connected}`,
+    );
+    if (
+      sessionInfo.waitingIntervalId === null &&
+      (!sessionInfo.player1Connected || !sessionInfo.player2Connected)
+    ) {
       sessionInfo.waitingIntervalId = this.startSinglePlayerWaitingInterval(matchId);
     }
 
-    this.checkAndStartCountdown(matchId);
+    if (sessionInfo.player1Connected && sessionInfo.player2Connected) {
+      this.logger.info(`Both players connected for match ${matchId}. Starting countdown.`);
+      sessionInfo.gameSpace.startCountDown(playerTypeSchema.enum.PLAYER1);
+    }
   }
 
   playerDisconnected(matchId: number, playerId: number): void {
@@ -165,34 +171,14 @@ export default class GameSession {
       return;
     }
 
-    if (sessionInfo.countdownIntervalId) {
-      clearInterval(sessionInfo.countdownIntervalId);
-      sessionInfo.countdownIntervalId = null;
-      sessionInfo.countdownStarted = false;
-    }
-
     if (playerId === sessionInfo.player1Id) {
       sessionInfo.player1Connected = false;
       this.logger.info(`Player 1 (${playerId}) disconnected from match ${matchId}`);
-    } else if (playerId === sessionInfo.player2Id) {
+    }
+    if (playerId === sessionInfo.player2Id) {
       sessionInfo.player2Connected = false;
       this.logger.info(`Player 2 (${playerId}) disconnected from match ${matchId}`);
     }
-
-    if (sessionInfo.isGameStarted) {
-      return;
-    }
-
-    if (sessionInfo.waitingIntervalId) {
-      clearInterval(sessionInfo.waitingIntervalId);
-      sessionInfo.waitingIntervalId = null;
-    }
-
-    if (sessionInfo.player1Connected || sessionInfo.player2Connected) {
-      sessionInfo.waitingIntervalId = this.startSinglePlayerWaitingInterval(matchId);
-      return;
-    }
-    sessionInfo.waitingIntervalId = this.startEmptySessionCleanupTimeout(matchId);
   }
 
   private startInitialWaitingTimeout(matchId: number): NodeJS.Timeout {
@@ -262,20 +248,6 @@ export default class GameSession {
     }, 1000);
   }
 
-  private startEmptySessionCleanupTimeout(matchId: number): NodeJS.Timeout {
-    return setTimeout(() => {
-      const sessionInfo = this.gameSessions.get(matchId);
-      if (!sessionInfo) return;
-
-      if (!sessionInfo.player1Connected && !sessionInfo.player2Connected) {
-        this.logger.info(
-          `Match ${matchId} cleanup: All players disconnected for ${this.PLAYER_WAITING_TIMEOUT / 1000} seconds`,
-        );
-        this.cleanupMatchSession(matchId);
-      }
-    }, this.PLAYER_WAITING_TIMEOUT);
-  }
-
   private cleanupMatchSession(matchId: number): void {
     const sessionInfo = this.gameSessions.get(matchId);
     if (!sessionInfo) return;
@@ -289,64 +261,5 @@ export default class GameSession {
 
     this.gameSessions.delete(matchId);
     this.logger.info(`Match session ${matchId} has been cleaned up`);
-  }
-
-  private checkAndStartCountdown(matchId: number): void {
-    const sessionInfo = this.gameSessions.get(matchId);
-    if (!sessionInfo) return;
-
-    if (
-      sessionInfo.player1Connected &&
-      sessionInfo.player2Connected &&
-      !sessionInfo.countdownStarted
-    ) {
-      sessionInfo.countdownStarted = true;
-      this.logger.info(`Both players connected for match ${matchId}. Starting countdown.`);
-      this.startCountdown(matchId);
-    }
-  }
-
-  private startCountdown(matchId: number): void {
-    const sessionInfo = this.gameSessions.get(matchId);
-    if (!sessionInfo) {
-      this.logger.error(`GameSession: Game space for match ID ${matchId} not found.`);
-      return;
-    }
-
-    let countdown = this.COUNTDOWN_SECONDS;
-    sessionInfo.countdownStarted = true;
-
-    const countdownIntervalId = setInterval(() => {
-      const sessionInfo = this.gameSessions.get(matchId);
-      if (!sessionInfo || !sessionInfo.player1Connected || !sessionInfo.player2Connected) {
-        clearInterval(countdownIntervalId);
-
-        this.logger.info(`Countdown cancelled for match ${matchId}: Player disconnected`);
-        this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.COUNTDOWN_CANCELLED);
-        return;
-      }
-
-      this.io
-        .to(`match:${matchId}`)
-        .emit(MATCH_SOCKET_EVENTS.COUNTDOWN, socketCountDownSchema.parse({ count: countdown }));
-      this.logger.info(`Countdown for match ${matchId}: ${countdown}`);
-      countdown -= 1;
-
-      if (countdown < 0) {
-        clearInterval(countdownIntervalId);
-        this.startGame(matchId);
-      }
-    }, 1000);
-
-    sessionInfo.countdownIntervalId = countdownIntervalId;
-  }
-
-  private startGame(matchId: number): void {
-    const sessionInfo = this.gameSessions.get(matchId);
-    if (!sessionInfo) return;
-
-    sessionInfo.isGameStarted = true;
-    this.logger.info(`Game started for match ${matchId}`);
-    this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.GAME_START);
   }
 }
