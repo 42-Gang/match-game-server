@@ -15,7 +15,6 @@ interface GameSessionInfo {
   player2Connected: boolean;
   player1Id: number;
   player2Id: number;
-  isGameStarted: boolean;
   countdownIntervalId: NodeJS.Timeout | null;
   waitingIntervalId: NodeJS.Timeout | null;
   playerWaitedTime: number;
@@ -97,7 +96,6 @@ export default class GameSession {
       player2Connected: false,
       player1Id: input.player1Id,
       player2Id: input.player2Id,
-      isGameStarted: false,
       countdownIntervalId: null,
       waitingIntervalId: this.startInitialWaitingTimeout(input.matchId),
       playerWaitedTime: 0,
