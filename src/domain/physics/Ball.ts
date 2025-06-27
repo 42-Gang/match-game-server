@@ -20,9 +20,9 @@ export default class Ball {
 
   reset() {
     // 공의 시작 위치를 라켓 위치로 설정
-    this.body.position.set(1, 1.0, 0);
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
+    this.body.position.set(1, 1.0, 0);
 
     // 충돌 데이터 초기화
     this.lastRacketPlayerId = null;
