@@ -42,11 +42,12 @@ export default class Judgement {
   }
 
   judgeCollision(data: CollisionData): JudgementResult {
-    if (this.scoreManager.isGameOver()) return this.createResult();
+    if (this.scoreManager.isGameOver()) return this.createResult(true);
+    let roundOver = false;
 
     switch (data.target) {
       case CollisionTarget.TABLE:
-        this.onTableHit(data);
+        if (this.onTableHit(data)) roundOver = true;
         break;
       case CollisionTarget.FLOOR:
         this.onFloorHit(data);
@@ -59,7 +60,7 @@ export default class Judgement {
       this.logger.info(`Game over! Winner: ${this.scoreManager.getWinner()}`);
     }
 
-    return this.createResult();
+    return this.createResult(roundOver);
   }
 
   private onTableHit(data: CollisionData): boolean {
@@ -159,7 +160,7 @@ export default class Judgement {
     this.logger.info(`Score updated: P1=${scoreDto.player1score}, P2=${scoreDto.player2score}`);
   }
 
-  private createResult(): JudgementResult {
+  private createResult(roundOver: boolean): JudgementResult {
     if (this.scoreManager.isGameOver()) {
       return {
         gameOver: true,
@@ -170,6 +171,7 @@ export default class Judgement {
     }
     return {
       gameOver: false,
+      roundOver,
       winner: null,
       score: this.scoreManager.getScoreDto(),
       nextServingPlayer: this.serveManager.getServingPlayer(),
