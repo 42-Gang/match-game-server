@@ -8,16 +8,16 @@ import { playerTypeSchema } from './game.schema.js';
 import { Logger } from 'pino';
 import { socketMatchTimeoutSchema } from '../network/schemas/match-timout.socket.schema.js';
 import Judgement from './Judgement.js';
+import GameManager from './GameManager.js';
 
 interface GameSessionInfo {
-  gameSpace: GameSpace;
+  gameManager: GameManager;
   player1Connected: boolean;
   player2Connected: boolean;
   player1Id: number;
   player2Id: number;
-  countdownIntervalId: NodeJS.Timeout | null;
-  waitingIntervalId: NodeJS.Timeout | null;
   playerWaitedTime: number;
+  waitingIntervalId: NodeJS.Timeout | null;
 }
 
 export default class GameSession {
@@ -40,13 +40,12 @@ export default class GameSession {
     this.logger.info(`Game session started with fixed time step: ${fixedTimeStep} seconds`);
     setInterval(() => {
       for (const [matchId, sessionInfo] of this.gameSessions.entries()) {
-        const gameSpace = sessionInfo.gameSpace;
+        const { gameManager } = sessionInfo;
+
+        gameManager.update(fixedTimeStep);
         this.io
           .to(`match:${matchId}`)
-          .emit(MATCH_SOCKET_EVENTS.GAME_STATE, gameSpace.getGameObjectsPositions());
-        if (!sessionInfo.gameSpace.isGameReadyOrPlaying()) continue;
-
-        gameSpace.step(fixedTimeStep);
+          .emit(MATCH_SOCKET_EVENTS.GAME_STATE, gameManager.getGameObjectsPositions());
       }
     }, intervalMs);
   }
@@ -60,7 +59,7 @@ export default class GameSession {
     return [sessionInfo.player1Id, sessionInfo.player2Id];
   }
 
-  createGameSpace(input: {
+  createGameSession(input: {
     tournamentId: number;
     matchId: number;
     player1Id: number;
@@ -86,19 +85,23 @@ export default class GameSession {
       racket1,
       racket2,
       this.logger,
+    );
+    const gameManager = new GameManager(
+      gameSpace,
+      ball,
+      this.logger,
       judgement,
       this.io.to(`match:${input.matchId}`),
     );
 
     this.gameSessions.set(input.matchId, {
-      gameSpace,
+      gameManager,
       player1Connected: false,
       player2Connected: false,
       player1Id: input.player1Id,
       player2Id: input.player2Id,
-      countdownIntervalId: null,
-      waitingIntervalId: this.startInitialWaitingTimeout(input.matchId),
       playerWaitedTime: 0,
+      waitingIntervalId: this.startInitialWaitingTimeout(input.matchId),
     });
   }
 
@@ -109,7 +112,7 @@ export default class GameSession {
       throw new Error(`GameSession: Game space for match ID ${matchId} not found.`);
     }
 
-    sessionInfo.gameSpace.updateRacketPosition(playerId, x, y, z);
+    sessionInfo.gameManager.updateRacketPosition(playerId, x, y, z);
   }
 
   isExist(matchId: number): boolean {
@@ -132,24 +135,26 @@ export default class GameSession {
       this.logger.info(`Player 2 (${playerId}) connected to match ${matchId}`);
     }
 
+    this.logger.info(
+      `Players connection: Player 1: ${sessionInfo.player1Connected}, Player 2: ${sessionInfo.player2Connected}`,
+    );
+
     if (sessionInfo.waitingIntervalId) {
       clearInterval(sessionInfo.waitingIntervalId);
       sessionInfo.waitingIntervalId = null;
     }
-
-    this.logger.info(
-      `Players connection: Player 1: ${sessionInfo.player1Connected}, Player 2: ${sessionInfo.player2Connected}`,
-    );
-    if (
-      sessionInfo.waitingIntervalId === null &&
-      (!sessionInfo.player1Connected || !sessionInfo.player2Connected)
-    ) {
+    if (!sessionInfo.player1Connected || !sessionInfo.player2Connected) {
       sessionInfo.waitingIntervalId = this.startSinglePlayerWaitingInterval(matchId);
     }
 
     if (sessionInfo.player1Connected && sessionInfo.player2Connected) {
-      this.logger.info(`Both players connected for match ${matchId}. Starting countdown.`);
-      sessionInfo.gameSpace.prepareForNextRound(playerTypeSchema.enum.PLAYER1);
+      if (sessionInfo.waitingIntervalId) {
+        clearInterval(sessionInfo.waitingIntervalId);
+      }
+
+      this.logger.info(`Both players connected for match ${matchId}. Starting game...`);
+      sessionInfo.gameManager.initializeGame();
+      sessionInfo.gameManager.prepareForNextRound(playerTypeSchema.enum.PLAYER1);
     }
   }
 
@@ -242,9 +247,6 @@ export default class GameSession {
 
     if (sessionInfo.waitingIntervalId) {
       clearInterval(sessionInfo.waitingIntervalId);
-    }
-    if (sessionInfo.countdownIntervalId) {
-      clearInterval(sessionInfo.countdownIntervalId);
     }
 
     this.gameSessions.delete(matchId);

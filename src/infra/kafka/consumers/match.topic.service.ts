@@ -15,7 +15,7 @@ export default class MatchTopicService {
     matchRequestMessageSchema.parse(messageValue);
     this.logger.info(messageValue, 'Received match request message:');
 
-    this.gameSession.createGameSpace({
+    this.gameSession.createGameSession({
       tournamentId: messageValue.tournamentId,
       matchId: messageValue.matchId,
       player1Id: messageValue.player1Id,
