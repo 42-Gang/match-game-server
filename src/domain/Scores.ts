@@ -3,8 +3,8 @@ import Score from './Score.js';
 export default class Scores {
   private readonly scores: Score[];
 
-  constructor() {
-    this.scores = [new Score(0, 0)];
+  constructor(private readonly scoreToWin: number) {
+    this.scores = [new Score(0, 0, this.scoreToWin)];
   }
 
   addScore(score: Score): void {

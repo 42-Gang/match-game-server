@@ -6,8 +6,8 @@ export class ScoreManager {
   private scores: Scores;
   private current: Score;
 
-  constructor() {
-    this.scores = new Scores();
+  constructor(private readonly scoreToWin: number) {
+    this.scores = new Scores(this.scoreToWin);
     this.current = this.scores.getLatestScore();
   }
 
@@ -17,7 +17,7 @@ export class ScoreManager {
     if (scoringPlayer === playerTypeSchema.enum.PLAYER1) player1Score++;
     if (scoringPlayer === playerTypeSchema.enum.PLAYER2) player2Score++;
 
-    const newScore = new Score(player1Score, player2Score);
+    const newScore = new Score(player1Score, player2Score, this.scoreToWin);
     this.scores.addScore(newScore);
     this.current = newScore;
   }
