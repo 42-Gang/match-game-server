@@ -64,6 +64,7 @@ export default class GameSession {
     matchId: number;
     player1Id: number;
     player2Id: number;
+    scoreToWin: number;
   }) {
     // TODO: awlix 등록하기
     if (this.isExist(input.matchId)) {
@@ -77,7 +78,12 @@ export default class GameSession {
     const tablePlayer2 = new Table(TableType.PLAYER2);
     const racket1 = new Racket(input.player1Id, playerTypeSchema.enum.PLAYER1);
     const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER2);
-    const judgement = new Judgement(input.player1Id, input.player2Id, 11, this.logger);
+    const judgement = new Judgement(
+      input.player1Id,
+      input.player2Id,
+      input.scoreToWin,
+      this.logger,
+    );
     const gameSpace = new GameSpace(
       ball,
       tablePlayer1,

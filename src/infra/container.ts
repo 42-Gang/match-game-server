@@ -5,6 +5,7 @@ import GameSession from '../domain/GameSession.js';
 export async function setDiContainer(diContainer: AwilixContainer) {
   diContainer.register({
     logger: asValue(logger),
+    scoreToWin: asValue(Number(process.env.SCORE_TO_WIN)),
   });
 
   diContainer.register({

@@ -9,6 +9,7 @@ export default class MatchTopicService {
   constructor(
     private readonly logger: Logger,
     private readonly gameSession: GameSession,
+    private readonly scoreToWin: number,
   ) {}
 
   async handleMatchRequest(messageValue: MatchRequestMessageType) {
@@ -20,6 +21,7 @@ export default class MatchTopicService {
       matchId: messageValue.matchId,
       player1Id: messageValue.player1Id,
       player2Id: messageValue.player2Id,
+      scoreToWin: this.scoreToWin,
     });
 
     // TODO: 게임 생성 후, producer로 게임 생성 완료 메시지 전송

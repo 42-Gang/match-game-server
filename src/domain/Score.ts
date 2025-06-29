@@ -9,6 +9,10 @@ export default class Score {
     if (player1score < 0 || player2score < 0) {
       throw new Error('Scores cannot be negative');
     }
+
+    if (typeof scoreToWin !== 'number') {
+      throw new Error('Score to win must be a number');
+    }
     if (scoreToWin <= 0) {
       throw new Error('Score to win must be a positive number');
     }
