@@ -1,14 +1,10 @@
-import GameSpace from './physics/GameSpace.js';
-import Ball from './physics/Ball.js';
-import Table, { TableType } from './physics/Table.js';
-import Racket from './physics/Racket.js';
 import { Server } from 'socket.io';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { playerTypeSchema } from './game.schema.js';
 import { Logger } from 'pino';
 import { socketMatchTimeoutSchema } from '../network/schemas/match-timout.socket.schema.js';
-import Judgement from './Judgement.js';
 import GameManager from './GameManager.js';
+import { asValue, AwilixContainer } from 'awilix';
 
 interface GameSessionInfo {
   gameManager: GameManager;
@@ -28,6 +24,7 @@ export default class GameSession {
   constructor(
     private readonly io: Server,
     private readonly logger: Logger,
+    private readonly container: AwilixContainer,
   ) {
     this.gameSessions = new Map<number, GameSessionInfo>();
     this.startLoop();
@@ -66,39 +63,19 @@ export default class GameSession {
     player2Id: number;
     scoreToWin: number;
   }) {
-    // TODO: awlix 등록하기
     if (this.isExist(input.matchId)) {
       throw new Error(`Game space for match ID ${input.matchId} already exists.`);
     }
     this.logger.info(`Creating game space for match ID ${input.matchId}`);
 
-    const ball = new Ball();
-    // 두 개의 테이블 생성 (플레이어 1, 플레이어 2 측)
-    const tablePlayer1 = new Table(TableType.PLAYER1);
-    const tablePlayer2 = new Table(TableType.PLAYER2);
-    const racket1 = new Racket(input.player1Id, playerTypeSchema.enum.PLAYER1);
-    const racket2 = new Racket(input.player2Id, playerTypeSchema.enum.PLAYER2);
-    const judgement = new Judgement(
-      input.player1Id,
-      input.player2Id,
-      input.scoreToWin,
-      this.logger,
-    );
-    const gameSpace = new GameSpace(
-      ball,
-      tablePlayer1,
-      tablePlayer2,
-      racket1,
-      racket2,
-      this.logger,
-    );
-    const gameManager = new GameManager(
-      gameSpace,
-      ball,
-      this.logger,
-      judgement,
-      this.io.to(`match:${input.matchId}`),
-    );
+    const sessionScope = this.container.createScope();
+    sessionScope.register({
+      player1Id: asValue(input.player1Id),
+      player2Id: asValue(input.player2Id),
+      scoreToWin: asValue(input.scoreToWin),
+      socketRoom: asValue(this.io.to(`match:${input.matchId}`)),
+    });
+    const gameManager = sessionScope.resolve<GameManager>('gameManager');
 
     this.gameSessions.set(input.matchId, {
       gameManager,

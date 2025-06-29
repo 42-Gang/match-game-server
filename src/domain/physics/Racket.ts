@@ -1,13 +1,9 @@
 import * as CANNON from 'cannon-es';
-import { PlayerType } from '../game.schema.js';
 
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(
-    private readonly playerId: number,
-    _playerType: PlayerType,
-  ) {
+  constructor(private readonly playerId: number) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
