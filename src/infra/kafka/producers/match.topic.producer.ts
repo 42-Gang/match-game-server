@@ -34,7 +34,6 @@ export async function matchCreatedProducer(input: {
 }
 
 export async function matchResultProducer(input: {
-  tournamentId: number;
   matchId: number;
   player1Id: number;
   player2Id: number;
@@ -44,10 +43,8 @@ export async function matchResultProducer(input: {
   };
   winnerId: number;
   loserId: number;
-  round: number;
 }) {
   const message = matchResultProducingInputSchema.parse({
-    tournamentId: input.tournamentId,
     matchId: input.matchId,
     player1Id: input.player1Id,
     player2Id: input.player2Id,
@@ -57,7 +54,6 @@ export async function matchResultProducer(input: {
     },
     winnerId: input.winnerId,
     loserId: input.loserId,
-    round: input.round,
   });
 
   await producer.send({

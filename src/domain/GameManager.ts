@@ -7,6 +7,7 @@ import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
 import Ball from './physics/Ball.js';
 import { socketGameEndSchema } from '../network/schemas/game-end.socket.schema.js';
+import { matchResultProducer } from '../infra/kafka/producers/match.topic.producer.js';
 
 export enum GameStatus {
   WAITING_FOR_PLAYERS, // 두 유저가 모두 접속하지 않은 경우
@@ -31,6 +32,7 @@ export default class GameManager {
     private readonly socketRoom: BroadcastOperator<DefaultEventsMap, unknown>,
     private readonly player1Id: number,
     private readonly player2Id: number,
+    private readonly matchId: number,
   ) {
     this.gameSpace.onCollisionEvent((event) => this.handleCollision(event));
   }
@@ -50,7 +52,7 @@ export default class GameManager {
     this.gameSpace.step(dt);
   }
 
-  private handleCollision(event: CollisionEvent) {
+  private async handleCollision(event: CollisionEvent) {
     switch (event.type) {
       case CollisionEventType.BALL_RACKET:
         if (!event.racket) {
@@ -77,7 +79,7 @@ export default class GameManager {
           previousHitTable: this.ball.getPreviousHitTable(),
         });
         this.logger.debug(tableJudgeCollision, '충돌 판정 결과 (테이블 충돌)');
-        this.processRoundResult(tableJudgeCollision);
+        await this.processRoundResult(tableJudgeCollision);
         break;
 
       case CollisionEventType.BALL_FLOOR:
@@ -89,7 +91,7 @@ export default class GameManager {
           previousHitTable: this.ball.getPreviousHitTable(),
         });
         this.logger.debug(floorJudgeCollision, '충돌 판정 결과 (바닥 충돌)');
-        this.processRoundResult(floorJudgeCollision);
+        await this.processRoundResult(floorJudgeCollision);
         break;
     }
   }
@@ -104,21 +106,35 @@ export default class GameManager {
     this.logger.info('게임시작: 중력 활성화');
   }
 
-  private processRoundResult(judgeResult: JudgementResult) {
+  private async processRoundResult(judgeResult: JudgementResult) {
     if (judgeResult.gameOver) {
+      this.status = GameStatus.GAME_OVER;
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
 
       const { player1Score, player2Score } = judgeResult.score;
+      const winnerId =
+        judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id;
+      const loserId =
+        judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player2Id : this.player1Id;
       this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, { player1Score, player2Score });
       this.socketRoom.emit(
         MATCH_SOCKET_EVENTS.GAME_END,
         socketGameEndSchema.parse({
           winner: judgeResult.winner,
-          winnerId:
-            judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id,
+          winnerId,
         }),
       );
-      this.status = GameStatus.GAME_OVER;
+      await matchResultProducer({
+        matchId: this.matchId,
+        player1Id: this.player1Id,
+        player2Id: this.player2Id,
+        score: {
+          player1: player1Score,
+          player2: player2Score,
+        },
+        winnerId,
+        loserId,
+      });
       return;
     }
 

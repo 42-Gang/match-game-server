@@ -79,6 +79,7 @@ export default class GameSession {
       player2Id: asValue(input.player2Id),
       scoreToWin: asValue(input.scoreToWin),
       socketRoom: asValue(this.io.to(`match:${input.matchId}`)),
+      matchId: asValue(input.matchId),
     });
     const gameManager = sessionScope.resolve<GameManager>('gameManager');
 
