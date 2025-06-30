@@ -9,4 +9,5 @@ export const MATCH_SOCKET_EVENTS = {
   PLAYER_DISCONNECTED: 'player-disconnected',
   WAITING_FOR_PLAYER: 'waiting-for-player',
   MATCH_TIMEOUT: 'match-timeout',
+  MATCH_SCORE: 'match-score',
 };

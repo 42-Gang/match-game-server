@@ -11,16 +11,16 @@ const vec3Schema = z.object({
   z: z.number(),
 });
 
-export const sessionStateSchema = z.object({
+export const gameObjectsPositionsSchema = z.object({
   ball: vec3Schema,
   racket1: vec3Schema,
   racket2: vec3Schema,
 });
-export type SessionStateType = TypeOf<typeof sessionStateSchema>;
+export type GameObjectsPositionsType = TypeOf<typeof gameObjectsPositionsSchema>;
 
 export const scoreSchema = z.object({
-  player1score: z.number(),
-  player2score: z.number(),
+  player1Score: z.number(),
+  player2Score: z.number(),
 });
 export type ScoreDto = TypeOf<typeof scoreSchema>;
 

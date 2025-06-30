@@ -7,6 +7,7 @@ import { ServeManager } from './ServeManager.js';
 
 export const judgementResult = z.object({
   gameOver: z.boolean().default(false), // 게임이 종료되었는지
+  roundOver: z.boolean().default(false), // 라운드가 종료되었는지
   winner: playerTypeSchema.nullable(), // 게임 우승자 (게임이 종료된 경우만 값이 존재)
   score: scoreSchema, // 현재 스코어
   nextServingPlayer: playerTypeSchema.optional(), // 서브권을 가진 플레이어
@@ -34,21 +35,24 @@ export default class Judgement {
   constructor(
     private readonly player1Id: number,
     private readonly player2Id: number,
+    private readonly scoreToWin: number,
     private readonly logger: Logger,
   ) {
-    this.scoreManager = new ScoreManager();
+    this.scoreManager = new ScoreManager(this.scoreToWin);
     this.serveManager = new ServeManager(logger);
   }
 
   judgeCollision(data: CollisionData): JudgementResult {
-    if (this.scoreManager.isGameOver()) return this.createResult();
+    if (this.scoreManager.isGameOver()) return this.createResult(true);
+    let roundOver = false;
 
     switch (data.target) {
       case CollisionTarget.TABLE:
-        this.onTableHit(data);
+        if (this.onTableHit(data)) roundOver = true;
         break;
       case CollisionTarget.FLOOR:
         this.onFloorHit(data);
+        roundOver = true;
         break;
       default:
         this.logger.warn({ data }, 'Unknown collision target');
@@ -58,13 +62,13 @@ export default class Judgement {
       this.logger.info(`Game over! Winner: ${this.scoreManager.getWinner()}`);
     }
 
-    return this.createResult();
+    return this.createResult(roundOver);
   }
 
-  private onTableHit(data: CollisionData): void {
+  private onTableHit(data: CollisionData): boolean {
     const { currentHitTable, previousHitTable } = data;
     if (currentHitTable !== previousHitTable || currentHitTable === null) {
-      return;
+      return false;
     }
 
     const scoringMap: Record<TableType, PlayerType> = {
@@ -76,10 +80,11 @@ export default class Judgement {
 
     if (!scoringPlayer) {
       this.logger.warn({ data }, 'Could not determine scoring player from table hit.');
-      return;
+      return false;
     }
 
     this.updateState(scoringPlayer);
+    return true;
   }
 
   private onFloorHit(data: CollisionData): void {
@@ -138,8 +143,8 @@ export default class Judgement {
       this.logger.info(`First serve game: ${scoringPlayer} won the serve right`);
       this.serveManager.updateServer({
         scoringPlayer,
-        player1score: 0,
-        player2score: 0,
+        player1Score: 0,
+        player2Score: 0,
       });
       return;
     }
@@ -150,23 +155,25 @@ export default class Judgement {
 
     this.serveManager.updateServer({
       scoringPlayer,
-      player1score: scoreDto.player1score,
-      player2score: scoreDto.player2score,
+      player1Score: scoreDto.player1Score,
+      player2Score: scoreDto.player2Score,
     });
 
-    this.logger.info(`Score updated: P1=${scoreDto.player1score}, P2=${scoreDto.player2score}`);
+    this.logger.info(`Score updated: P1=${scoreDto.player1Score}, P2=${scoreDto.player2Score}`);
   }
 
-  private createResult(): JudgementResult {
+  private createResult(roundOver: boolean): JudgementResult {
     if (this.scoreManager.isGameOver()) {
       return {
-        gameOver: true,
+        gameOver: this.scoreManager.isGameOver(),
+        roundOver: true,
         winner: this.scoreManager.getWinner(),
         score: this.scoreManager.getScoreDto(),
       };
     }
     return {
       gameOver: false,
+      roundOver,
       winner: null,
       score: this.scoreManager.getScoreDto(),
       nextServingPlayer: this.serveManager.getServingPlayer(),

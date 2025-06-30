@@ -1,15 +1,13 @@
 import * as CANNON from 'cannon-es';
 import { TableType } from './Table.js';
+import { PlayerType, playerTypeSchema } from '../game.schema.js';
 
 export default class Ball {
   public body: CANNON.Body;
 
-  // 충돌 데이터 저장을 위한 변수들
   private lastRacketPlayerId: number | null = null;
-  private lastTableType: TableType | null = null;
-  private lastCollisionTime: number = 0;
-  private lastRacketCollisionTime: number = 0;
-  private lastTableCollisionTime: number = 0;
+  private currentHitTable: TableType | null = null;
+  private previousHitTable: TableType | null = null;
 
   constructor() {
     const material = new CANNON.Material('ballMaterial');
@@ -18,21 +16,25 @@ export default class Ball {
       shape: new CANNON.Sphere(0.1), // 10cm 지름
       material,
     });
-    this.reset();
+    this.reset(playerTypeSchema.enum.PLAYER1); // 초기 위치 설정
   }
 
-  reset() {
+  reset(player: PlayerType) {
     // 공의 시작 위치를 라켓 위치로 설정
-    this.body.position.set(1, 1.0, 0);
     this.body.velocity.set(0, 0, 0);
     this.body.angularVelocity.set(0, 0, 0);
 
+    if (player === playerTypeSchema.enum.PLAYER1) {
+      this.body.position.set(1, 1.0, 0);
+    }
+    if (player === playerTypeSchema.enum.PLAYER2) {
+      this.body.position.set(-1, 1.0, 0); // 플레이어 1의 시작 위치
+    }
+
     // 충돌 데이터 초기화
     this.lastRacketPlayerId = null;
-    this.lastTableType = null;
-    this.lastCollisionTime = 0;
-    this.lastRacketCollisionTime = 0;
-    this.lastTableCollisionTime = 0;
+    this.previousHitTable = null;
+    this.currentHitTable = null;
   }
 
   getMaterial() {
@@ -42,37 +44,33 @@ export default class Ball {
     return this.body.material;
   }
 
-  // 충돌 데이터 기록 메서드
-  recordRacketCollision(playerId: number, currentTime: number) {
+  recordRacketCollision(playerId: number) {
     this.lastRacketPlayerId = playerId;
-    this.lastRacketCollisionTime = currentTime;
-    this.lastCollisionTime = currentTime;
+    this.previousHitTable = null;
+    this.currentHitTable = null;
   }
 
-  recordTableCollision(tableType: TableType, currentTime: number) {
-    this.lastTableType = tableType;
-    this.lastTableCollisionTime = currentTime;
-    this.lastCollisionTime = currentTime;
+  recordTableCollision(tableType: TableType) {
+    this.previousHitTable = this.currentHitTable;
+    this.currentHitTable = tableType;
   }
 
-  // 충돌 데이터 조회 메서드
   getLastRacketPlayerId(): number | null {
     return this.lastRacketPlayerId;
   }
 
-  getLastTableType(): TableType | null {
-    return this.lastTableType;
+  getCurrentHitTable(): TableType | null {
+    return this.currentHitTable;
   }
 
-  getLastCollisionTime(): number {
-    return this.lastCollisionTime;
+  getPreviousHitTable(): TableType | null {
+    return this.previousHitTable;
   }
 
-  getLastRacketCollisionTime(): number {
-    return this.lastRacketCollisionTime;
-  }
-
-  getLastTableCollisionTime(): number {
-    return this.lastTableCollisionTime;
+  getY() {
+    if (!this.body.position) {
+      throw new Error('Ball position is not defined');
+    }
+    return this.body.position.y;
   }
 }

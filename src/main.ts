@@ -1,10 +1,10 @@
 import process from 'node:process';
 import closeWithGrace from 'close-with-grace';
 import { Server, Server as SocketIOServer } from 'socket.io';
-import { asClass, asFunction, asValue, AwilixContainer, createContainer, Lifetime } from 'awilix';
+import { asClass, asFunction, asValue, AwilixContainer, Lifetime } from 'awilix';
 import { logger } from './infra/logger.js';
 import { redis } from './infra/redis.js';
-import { setDiContainer } from './infra/container.js';
+import { createDiContainer } from './infra/container.js';
 import { startConsumer } from './infra/kafka/consumer.js';
 import type { BaseLogger } from 'pino';
 import { registerSocket } from './network/socket.js';
@@ -81,10 +81,7 @@ async function init() {
     cors: { origin: '*', methods: ['GET', 'POST'] },
   });
 
-  const diContainer = createContainer({
-    injectionMode: 'CLASSIC',
-  });
-  await setDiContainer(diContainer);
+  const diContainer = await createDiContainer();
 
   io.logger = logger as BaseLogger;
   io.diContainer = diContainer;

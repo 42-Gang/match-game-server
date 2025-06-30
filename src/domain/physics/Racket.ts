@@ -1,13 +1,9 @@
 import * as CANNON from 'cannon-es';
-import { PlayerType } from '../game.schema.js';
 
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(
-    private readonly playerId: number,
-    _playerType: PlayerType,
-  ) {
+  constructor(private readonly playerId: number) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
@@ -16,7 +12,7 @@ export default class Racket {
     });
     this.body.sleepState = CANNON.Body.AWAKE;
 
-    const tiltAngle = 20 * Math.PI;
+    const tiltAngle = (20 * Math.PI) / 180;
     const xAxis = new CANNON.Vec3(0, 0, -1);
     this.body.quaternion.setFromAxisAngle(xAxis, tiltAngle);
   }

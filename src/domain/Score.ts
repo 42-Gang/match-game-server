@@ -4,21 +4,29 @@ export default class Score {
   constructor(
     private readonly player1score: number,
     private readonly player2score: number,
+    private readonly scoreToWin: number,
   ) {
     if (player1score < 0 || player2score < 0) {
       throw new Error('Scores cannot be negative');
+    }
+
+    if (typeof scoreToWin !== 'number') {
+      throw new Error('Score to win must be a number');
+    }
+    if (scoreToWin <= 0) {
+      throw new Error('Score to win must be a positive number');
     }
   }
 
   toScoreDto(): ScoreDto {
     return {
-      player1score: this.player1score,
-      player2score: this.player2score,
+      player1Score: this.player1score,
+      player2Score: this.player2score,
     };
   }
 
   isGameOver(): boolean {
-    if (11 <= this.player1score || 11 <= this.player2score) {
+    if (this.scoreToWin <= this.player1score || this.scoreToWin <= this.player2score) {
       return 2 <= Math.abs(this.player1score - this.player2score);
     }
 
