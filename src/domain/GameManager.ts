@@ -37,7 +37,6 @@ export default class GameManager {
 
     this.gameSpace.reset(playerTypeSchema.enum.PLAYER1);
     this.logger.info('게임 초기화: 게임 공간 리셋 및 상태 설정');
-    // TODO: 양쪽 플레이어가 모두 준비되면 카운트다운 시작.
   }
 
   public update(dt: number): void {
@@ -46,8 +45,6 @@ export default class GameManager {
     }
 
     this.gameSpace.step(dt);
-    // const positions = this.gameSpace.getGameObjectsPositions(); <- 제거 예정
-    // this.socketRoom.emit(MATCH_SOCKET_EVENTS.GAME_STATE, positions); <- 제거 예정
   }
 
   private handleCollision(event: CollisionEvent) {
@@ -94,10 +91,6 @@ export default class GameManager {
     }
   }
 
-  public getStatus(): GameStatus {
-    return this.status;
-  }
-
   public getGameObjectsPositions() {
     return this.gameSpace.getGameObjectsPositions();
   }
@@ -112,7 +105,7 @@ export default class GameManager {
     if (judgeResult.gameOver) {
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
       this.status = GameStatus.GAME_OVER;
-      // TODO: 게임 종료 관련 처리 로직 (예: 결과 전송, 룸 정리)
+      // TODO: 게임 종료 관련 처리 로직 (예: 결과 전송, 룸 정리) 일정시간 이후 세션 정리
       return;
     }
 

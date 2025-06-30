@@ -4,6 +4,7 @@ import {
 } from '../schemas/match.topic.schema.js';
 import { Logger } from 'pino';
 import GameSession from '../../../domain/GameSession.js';
+import { matchCreatedProducer } from '../producers/match.topic.producer.js';
 
 export default class MatchTopicService {
   constructor(
@@ -24,6 +25,13 @@ export default class MatchTopicService {
       scoreToWin: this.scoreToWin,
     });
 
-    // TODO: 게임 생성 후, producer로 게임 생성 완료 메시지 전송
+    // 게임 생성 결과 전달
+    await matchCreatedProducer({
+      tournamentId: messageValue.tournamentId,
+      matchId: messageValue.matchId,
+      matchServerName: messageValue.matchServerName,
+      player1Id: messageValue.player1Id,
+      player2Id: messageValue.player2Id,
+    });
   }
 }
