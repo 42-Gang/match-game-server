@@ -191,4 +191,8 @@ export default class GameManager {
     this.countdownInterval = null;
     this.logger.info('Countdown cleared');
   }
+
+  public isGameOver(): boolean {
+    return this.status === GameStatus.GAME_OVER;
+  }
 }

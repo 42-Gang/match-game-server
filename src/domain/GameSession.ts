@@ -38,6 +38,12 @@ export default class GameSession {
       for (const [matchId, sessionInfo] of this.gameSessions.entries()) {
         const { gameManager } = sessionInfo;
 
+        if (gameManager.isGameOver()) {
+          this.logger.info(`Game over for match ID ${matchId}. Cleaning up session.`);
+          this.cleanupMatchSession(matchId);
+          continue;
+        }
+
         gameManager.update(fixedTimeStep);
         this.io
           .to(`match:${matchId}`)
