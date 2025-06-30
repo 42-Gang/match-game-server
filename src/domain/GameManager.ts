@@ -20,6 +20,7 @@ export enum GameStatus {
 export default class GameManager {
   private readonly COUNTDOWN_SECONDS: number = 3;
   private status: GameStatus = GameStatus.WAITING_FOR_PLAYERS;
+  private countdownInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly gameSpace: GameSpace,
@@ -151,7 +152,7 @@ export default class GameManager {
     this.status = GameStatus.COUNTDOWN;
     let countdown = this.COUNTDOWN_SECONDS;
 
-    const countdownInterval = setInterval(() => {
+    this.countdownInterval = setInterval(() => {
       this.logger.info(`카운트다운: ${countdown}초`);
 
       this.socketRoom.emit(
@@ -163,11 +164,20 @@ export default class GameManager {
 
       if (countdown <= 0) {
         this.status = GameStatus.READY;
-        clearInterval(countdownInterval);
-        this.logger.info('카운트다운 완료, 게임 시작');
+        this.clearCountDown();
         return;
       }
       countdown--;
     }, 1000);
+  }
+
+  public clearCountDown() {
+    if (!this.countdownInterval) {
+      return;
+    }
+
+    clearInterval(this.countdownInterval);
+    this.countdownInterval = null;
+    this.logger.info('Countdown cleared');
   }
 }

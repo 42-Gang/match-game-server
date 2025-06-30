@@ -228,11 +228,18 @@ export default class GameSession {
     const sessionInfo = this.gameSessions.get(matchId);
     if (!sessionInfo) return;
 
-    if (sessionInfo.waitingIntervalId) {
-      clearInterval(sessionInfo.waitingIntervalId);
-    }
+    const { gameManager, waitingIntervalId } = sessionInfo;
+    gameManager.clearCountDown();
+    this.cleanWaitingInterval(waitingIntervalId);
 
     this.gameSessions.delete(matchId);
     this.logger.info(`Match session ${matchId} has been cleaned up`);
+  }
+
+  private cleanWaitingInterval(waitingIntervalId: NodeJS.Timeout | null): void {
+    if (!waitingIntervalId) return;
+
+    clearInterval(waitingIntervalId);
+    this.logger.info('Waiting interval cleared');
   }
 }
