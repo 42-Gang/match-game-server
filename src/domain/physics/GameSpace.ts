@@ -48,7 +48,7 @@ export default class GameSpace {
     this.world.gravity.set(0, 0, 0);
 
     this.floorBody = new CANNON.Body({
-      mass: 0, // 질량이 0이면 움직이지 않는 static Body가 됩니다.
+      mass: 0,
       shape: new CANNON.Plane(),
       material: this.floorMaterial,
     });
@@ -147,16 +147,17 @@ export default class GameSpace {
   step(dt: number): void {
     this.world.step(dt, dt, 10);
 
-    // 공의 속도를 지속적으로 제한하여 느린 움직임 구현
+    this.clampBallVelocity();
+  }
+
+  private clampBallVelocity() {
     const velocity = this.ball.body.velocity;
     const speed = velocity.length();
 
     if (speed > 3) {
-      // 최대 속도를 1.5로 제한
-      // 속도를 대폭 감소
       this.ball.body.velocity.scale(0.95, this.ball.body.velocity); // 30% 감속
       this.ball.body.angularVelocity.scale(0.95, this.ball.body.angularVelocity);
-      this.logger.info(
+      this.logger.debug(
         `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
       );
     }
@@ -171,12 +172,6 @@ export default class GameSpace {
   }
 
   updateRacketPosition(playerId: number, x: number, y: number, z: number) {
-    // if (!this.isGameReadyOrPlaying()) {
-    //   // this.logger.warn(
-    //   //   `Player ${playerId} tried to update racket position while game is not in READY or PLAYING state.`,
-    //   // );
-    //   return;
-    // }
     const racket = this.getRacketByPlayerId(playerId);
     let clampedX;
     if (playerId === this.racket1.getPlayerId()) {
