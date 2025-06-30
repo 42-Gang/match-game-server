@@ -155,7 +155,7 @@ export default class GameSpace {
     const speed = velocity.length();
 
     if (speed > 3) {
-      this.ball.body.velocity.scale(0.95, this.ball.body.velocity); // 30% 감속
+      this.ball.body.velocity.scale(0.95, this.ball.body.velocity);
       this.ball.body.angularVelocity.scale(0.95, this.ball.body.angularVelocity);
       this.logger.debug(
         `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
