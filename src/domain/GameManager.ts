@@ -106,6 +106,8 @@ export default class GameManager {
 
   private processRoundResult(judgeResult: JudgementResult) {
     if (judgeResult.gameOver) {
+      this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+
       const { player1Score, player2Score } = judgeResult.score;
       this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, { player1Score, player2Score });
       this.socketRoom.emit(
@@ -116,10 +118,12 @@ export default class GameManager {
             judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id,
         }),
       );
-
-      this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
       this.status = GameStatus.GAME_OVER;
-      // TODO: 게임 종료 관련 처리 로직 (예: 결과 전송, 룸 정리) 일정시간 이후 세션 정리
+
+      setTimeout(() => {
+        this.socketRoom.disconnectSockets();
+        this.logger.info('모든 소켓 연결 해제');
+      }, 3000);
       return;
     }
 
