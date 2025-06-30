@@ -119,11 +119,6 @@ export default class GameManager {
         }),
       );
       this.status = GameStatus.GAME_OVER;
-
-      setTimeout(() => {
-        this.socketRoom.disconnectSockets();
-        this.logger.info('모든 소켓 연결 해제');
-      }, 3000);
       return;
     }
 

@@ -238,6 +238,11 @@ export default class GameSession {
     gameManager.clearCountDown();
     this.cleanWaitingInterval(waitingIntervalId);
 
+    setTimeout(() => {
+      this.io.to(`match:${matchId}`).disconnectSockets(true);
+      this.logger.info('모든 소켓 연결 해제');
+    }, 3000);
+
     this.gameSessions.delete(matchId);
     this.logger.info(`Match session ${matchId} has been cleaned up`);
   }
