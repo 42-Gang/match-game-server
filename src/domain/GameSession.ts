@@ -12,7 +12,6 @@ interface GameSessionInfo {
   player2Connected: boolean;
   player1Id: number;
   player2Id: number;
-  playerWaitedTime: number;
   waitingIntervalId: NodeJS.Timeout | null;
 }
 
@@ -83,7 +82,6 @@ export default class GameSession {
       player2Connected: false,
       player1Id: input.player1Id,
       player2Id: input.player2Id,
-      playerWaitedTime: 0,
       waitingIntervalId: this.startInitialWaitingTimeout(input.matchId),
     });
   }
@@ -175,6 +173,8 @@ export default class GameSession {
   private startSinglePlayerWaitingInterval(matchId: number): NodeJS.Timeout {
     this.logger.info(`Starting single player waiting timeout for match ${matchId}`);
 
+    let waitedTime = 0;
+
     return setInterval(() => {
       const sessionInfo = this.gameSessions.get(matchId);
       if (!sessionInfo) {
@@ -182,18 +182,18 @@ export default class GameSession {
         return;
       }
 
-      sessionInfo.playerWaitedTime += 1;
-      if (sessionInfo.playerWaitedTime * 1000 < this.PLAYER_WAITING_TIMEOUT) {
+      waitedTime += 1;
+      if (waitedTime * 1000 < this.PLAYER_WAITING_TIMEOUT) {
         const waitingForPlayerId = sessionInfo.player1Connected
           ? sessionInfo.player2Id
           : sessionInfo.player1Id;
         this.logger.info(
-          `Waiting for player ${waitingForPlayerId} in match ${matchId}. Current waiting time: ${sessionInfo.playerWaitedTime} seconds`,
+          `Waiting for player ${waitingForPlayerId} in match ${matchId}. Current waiting time: ${waitedTime} seconds`,
         );
 
         this.io.to(`match:${matchId}`).emit(MATCH_SOCKET_EVENTS.WAITING_FOR_PLAYER, {
           waitingForPlayerId,
-          currentWaitingTimeInSeconds: sessionInfo.playerWaitedTime,
+          currentWaitingTimeInSeconds: waitedTime,
           timeoutInSeconds: this.PLAYER_WAITING_TIMEOUT / 1000,
         });
         return;
