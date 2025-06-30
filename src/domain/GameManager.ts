@@ -6,6 +6,7 @@ import { PlayerType, playerTypeSchema } from './game.schema.js';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
 import Ball from './physics/Ball.js';
+import { socketGameEndSchema } from '../network/schemas/game-end.socket.schema.js';
 
 export enum GameStatus {
   WAITING_FOR_PLAYERS, // 두 유저가 모두 접속하지 않은 경우
@@ -28,6 +29,8 @@ export default class GameManager {
     private readonly logger: BaseLogger,
     private readonly judgement: Judgement,
     private readonly socketRoom: BroadcastOperator<DefaultEventsMap, unknown>,
+    private readonly player1Id: number,
+    private readonly player2Id: number,
   ) {
     this.gameSpace.onCollisionEvent((event) => this.handleCollision(event));
   }
@@ -103,6 +106,17 @@ export default class GameManager {
 
   private processRoundResult(judgeResult: JudgementResult) {
     if (judgeResult.gameOver) {
+      const { player1Score, player2Score } = judgeResult.score;
+      this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, { player1Score, player2Score });
+      this.socketRoom.emit(
+        MATCH_SOCKET_EVENTS.GAME_END,
+        socketGameEndSchema.parse({
+          winner: judgeResult.winner,
+          winnerId:
+            judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id,
+        }),
+      );
+
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
       this.status = GameStatus.GAME_OVER;
       // TODO: 게임 종료 관련 처리 로직 (예: 결과 전송, 룸 정리) 일정시간 이후 세션 정리
