@@ -25,7 +25,7 @@ export interface CollisionEvent {
 
 export default class GameSpace {
   private readonly world: CANNON.World = new CANNON.World({
-    gravity: new CANNON.Vec3(0, -9.81, 0),
+    gravity: new CANNON.Vec3(0, -4.5, 0),
   });
 
   private onCollision?: { (event: CollisionEvent): void };
@@ -146,6 +146,20 @@ export default class GameSpace {
 
   step(dt: number): void {
     this.world.step(dt, dt, 10);
+
+    // 공의 속도를 지속적으로 제한하여 느린 움직임 구현
+    const velocity = this.ball.body.velocity;
+    const speed = velocity.length();
+
+    if (speed > 3) {
+      // 최대 속도를 1.5로 제한
+      // 속도를 대폭 감소
+      this.ball.body.velocity.scale(0.95, this.ball.body.velocity); // 30% 감속
+      this.ball.body.angularVelocity.scale(0.95, this.ball.body.angularVelocity);
+      this.logger.info(
+        `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
+      );
+    }
   }
 
   getGameObjectsPositions(): GameObjectsPositionsType {
