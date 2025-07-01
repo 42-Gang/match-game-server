@@ -112,16 +112,17 @@ export default class GameManager {
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
 
       const { player1Score, player2Score } = judgeResult.score;
-      const winnerId =
-        judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id;
-      const loserId =
-        judgeResult.winner === playerTypeSchema.enum.PLAYER1 ? this.player2Id : this.player1Id;
+      if (judgeResult.winnerId === undefined || judgeResult.loserId === undefined) {
+        this.logger.error('점수 정보가 누락되었습니다. 게임 종료를 처리할 수 없습니다.');
+        throw new Error('점수 정보가 누락되었습니다. 게임 종료를 처리할 수 없습니다.');
+      }
+
       this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, { player1Score, player2Score });
       this.socketRoom.emit(
         MATCH_SOCKET_EVENTS.GAME_END,
         socketGameEndSchema.parse({
           winner: judgeResult.winner,
-          winnerId,
+          winnerId: judgeResult.winnerId,
         }),
       );
       await matchResultProducer({
@@ -132,8 +133,8 @@ export default class GameManager {
           player1: player1Score,
           player2: player2Score,
         },
-        winnerId,
-        loserId,
+        winnerId: judgeResult.winnerId,
+        loserId: judgeResult.loserId,
       });
       return;
     }
