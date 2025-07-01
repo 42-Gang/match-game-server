@@ -162,7 +162,10 @@ export default class GameSpace {
 
     if (speed > this.MAX_BALL_SPEED) {
       this.ball.body.velocity.scale(this.VELOCITY_DAMPING_FACTOR, this.ball.body.velocity);
-      this.ball.body.angularVelocity.scale(0.95, this.ball.body.angularVelocity);
+      this.ball.body.angularVelocity.scale(
+        this.VELOCITY_DAMPING_FACTOR,
+        this.ball.body.angularVelocity,
+      );
       this.logger.debug(
         `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
       );
