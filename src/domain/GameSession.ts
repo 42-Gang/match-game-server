@@ -241,7 +241,7 @@ export default class GameSession {
 
     setTimeout(() => {
       this.io.to(`match:${matchId}`).disconnectSockets(true);
-      this.logger.info('모든 소켓 연결 해제');
+      this.logger.info('All socket connections have been disconnected');
     }, 3000);
 
     this.gameSessions.delete(matchId);
