@@ -23,7 +23,7 @@ export default class Racket {
     const dt = 1 / 60;
     const speedScale = 0.3;
     const desiredVel = delta.scale(speedScale / dt);
-    const maxSpeed = 5;
+    const maxSpeed = 6;
     const speed = desiredVel.length();
     if (speed > maxSpeed) {
       desiredVel.scale(maxSpeed / speed, desiredVel);
