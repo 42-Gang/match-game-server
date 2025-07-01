@@ -184,9 +184,9 @@ export default class GameSpace {
     const racket = this.getRacketByPlayerId(playerId);
     let clampedX;
     if (playerId === this.racket1.getPlayerId()) {
-      clampedX = this.clamp(x, 0, 2);
+      clampedX = this.clamp(x, 0, 4);
     } else {
-      clampedX = this.clamp(x, -2, 0);
+      clampedX = this.clamp(x, -4, 0);
     }
     const clampedZ = this.clamp(z, -1.5, 1.5);
     racket.updatePositionTest(clampedX, y, clampedZ);
