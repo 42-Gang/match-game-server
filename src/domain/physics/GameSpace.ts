@@ -24,10 +24,7 @@ export interface CollisionEvent {
 }
 
 export default class GameSpace {
-  private readonly world: CANNON.World = new CANNON.World({
-    gravity: new CANNON.Vec3(0, -4.5, 0),
-  });
-
+  private readonly world: CANNON.World;
   private onCollision?: { (event: CollisionEvent): void };
   private readonly originalGravity: CANNON.Vec3;
 
@@ -41,7 +38,12 @@ export default class GameSpace {
     private readonly racket1: Racket,
     private readonly racket2: Racket,
     private readonly logger: BaseLogger,
+    private readonly gravityY: number,
   ) {
+    this.world = new CANNON.World({
+      gravity: new CANNON.Vec3(0, this.gravityY, 0),
+    });
+
     this.originalGravity = this.world.gravity.clone();
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;

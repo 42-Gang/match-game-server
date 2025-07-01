@@ -23,6 +23,7 @@ export async function createDiContainer() {
   });
 
   diContainer.register({
+    gravityY: asValue(Number(process.env.GRAVITY_Y)),
     gameSession: asClass(GameSession).singleton(),
 
     gameManager: asClass(GameManager).scoped(),
