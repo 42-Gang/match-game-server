@@ -122,7 +122,6 @@ export default class GameSpace {
   }
 
   reset(player: PlayerType) {
-    // this.status = GameStatus.STANDBY;
     this.world.gravity.set(0, 0, 0);
 
     const racket1InitialPos = new CANNON.Vec3(2, 0.8, 0);
@@ -152,12 +151,15 @@ export default class GameSpace {
     this.clampBallVelocity();
   }
 
+  private readonly MAX_BALL_SPEED = 3;
+  private readonly VELOCITY_DAMPING_FACTOR = 0.95;
+
   private clampBallVelocity() {
     const velocity = this.ball.body.velocity;
     const speed = velocity.length();
 
-    if (speed > 3) {
-      this.ball.body.velocity.scale(0.95, this.ball.body.velocity);
+    if (speed > this.MAX_BALL_SPEED) {
+      this.ball.body.velocity.scale(this.VELOCITY_DAMPING_FACTOR, this.ball.body.velocity);
       this.ball.body.angularVelocity.scale(0.95, this.ball.body.angularVelocity);
       this.logger.debug(
         `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
