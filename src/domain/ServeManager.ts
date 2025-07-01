@@ -11,7 +11,10 @@ export class ServeManager {
   private server: PlayerType;
   private firstServe;
 
-  constructor(private readonly logger: BaseLogger) {
+  constructor(
+    private readonly logger: BaseLogger,
+    private readonly scoreToWin: number,
+  ) {
     this.server = playerTypeSchema.enum.PLAYER1;
     this.firstServe = true;
   }
@@ -26,7 +29,7 @@ export class ServeManager {
     }
 
     // 듀스 상황
-    if (10 <= player1Score && 10 <= player2Score) {
+    if (this.scoreToWin - 1 <= player1Score && this.scoreToWin - 1 <= player2Score) {
       this.server = this.getOpposite(this.server);
       this.logger.info(`Deuce, serve switched to ${this.server}`);
       return this.server;

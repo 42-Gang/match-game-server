@@ -37,11 +37,11 @@ export default class Judgement {
   constructor(
     private readonly player1Id: number,
     private readonly player2Id: number,
-    private readonly scoreToWin: number,
     private readonly logger: Logger,
+    private readonly scoreToWin: number,
   ) {
     this.scoreManager = new ScoreManager(this.scoreToWin);
-    this.serveManager = new ServeManager(logger);
+    this.serveManager = new ServeManager(logger, this.scoreToWin);
   }
 
   judgeCollision(data: CollisionData): JudgementResult {
