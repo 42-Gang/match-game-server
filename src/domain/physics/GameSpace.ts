@@ -25,7 +25,7 @@ export interface CollisionEvent {
 
 export default class GameSpace {
   private readonly world: CANNON.World;
-  private onCollision?: { (event: CollisionEvent): void };
+  private onCollision?: (event: CollisionEvent) => Promise<void>;
   private readonly originalGravity: CANNON.Vec3;
 
   private readonly floorBody: CANNON.Body;
@@ -77,8 +77,10 @@ export default class GameSpace {
     this.reset(playerTypeSchema.enum.PLAYER1);
   }
 
-  public onCollisionEvent(callback: (event: CollisionEvent) => void) {
-    this.onCollision = callback;
+  public onCollisionEvent(callback: (event: CollisionEvent) => Promise<void>) {
+    this.onCollision = async (event: CollisionEvent) => {
+      return callback(event);
+    };
   }
 
   private setupContactMaterials() {
@@ -212,7 +214,7 @@ export default class GameSpace {
     throw new Error(`Player with ID ${playerId} does not have a racket.`);
   }
 
-  private handleCollision(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
+  private async handleCollision(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
     if (!this.onCollision) {
       this.logger.error(`Collision event handler is not set.`);
       throw new Error(`Collision event handler is not set.`);
@@ -227,7 +229,7 @@ export default class GameSpace {
     }
 
     if (otherBody === this.racket1.body || otherBody === this.racket2.body) {
-      this.onCollision({
+      await this.onCollision({
         type: CollisionEventType.BALL_RACKET,
         ball: this.ball,
         racket: otherBody === this.racket1.body ? this.racket1 : this.racket2,
@@ -236,7 +238,7 @@ export default class GameSpace {
     }
 
     if (otherBody === this.tablePlayer1.body || otherBody === this.tablePlayer2.body) {
-      this.onCollision({
+      await this.onCollision({
         type: CollisionEventType.BALL_TABLE,
         ball: this.ball,
         table: otherBody === this.tablePlayer1.body ? this.tablePlayer1 : this.tablePlayer2,
@@ -245,7 +247,7 @@ export default class GameSpace {
     }
 
     if (otherBody === this.floorBody) {
-      this.onCollision({
+      await this.onCollision({
         type: CollisionEventType.BALL_FLOOR,
         ball: this.ball,
       });
