@@ -112,7 +112,11 @@ export default class GameManager {
       this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
 
       const { player1Score, player2Score } = judgeResult.score;
-      if (judgeResult.winnerId === undefined || judgeResult.loserId === undefined) {
+      if (
+        judgeResult.winnerId === undefined ||
+        judgeResult.loserId === undefined ||
+        judgeResult.winner === null
+      ) {
         this.logger.error('점수 정보가 누락되었습니다. 게임 종료를 처리할 수 없습니다.');
         throw new Error('점수 정보가 누락되었습니다. 게임 종료를 처리할 수 없습니다.');
       }
