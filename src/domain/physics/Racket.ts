@@ -1,18 +1,24 @@
 import * as CANNON from 'cannon-es';
+import { PlayerType, playerTypeSchema } from '../game.schema.js';
 
 export default class Racket {
   public body: CANNON.Body;
 
-  constructor(private readonly playerId: number) {
+  constructor(
+    private readonly playerId: number,
+    private readonly playerType: PlayerType,
+  ) {
     const material = new CANNON.Material('racketMaterial');
     this.body = new CANNON.Body({
       type: CANNON.Body.KINEMATIC,
-      shape: new CANNON.Box(new CANNON.Vec3(0.025, 0.15, 0.15)),
+      shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.15, 0.15)),
       material,
     });
     this.body.sleepState = CANNON.Body.AWAKE;
 
-    const tiltAngle = (20 * Math.PI) / 180;
+    // playerType에 따라 기울이기
+    const baseTilt = Math.PI / 4.5; // 40도
+    const tiltAngle = this.playerType === playerTypeSchema.enum.PLAYER1 ? -baseTilt : baseTilt;
     const xAxis = new CANNON.Vec3(0, 0, -1);
     this.body.quaternion.setFromAxisAngle(xAxis, tiltAngle);
   }
