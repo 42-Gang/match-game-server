@@ -159,11 +159,7 @@ export default class GameManager {
       const { player1Score, player2Score } = judgeResult.score;
       this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, { player1Score, player2Score });
       setTimeout(() => {
-        if (!judgeResult.nextServingPlayer) {
-          this.logger.error('라운드 오버 상태가 아닙니다. 라운드 종료를 처리할 수 없습니다.');
-          return;
-        }
-        this.prepareForNextRound(judgeResult.nextServingPlayer);
+        this.prepareForNextRound(judgeResult.nextServingPlayer!);
       }, 3000);
       return;
     }
