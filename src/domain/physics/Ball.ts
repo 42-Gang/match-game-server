@@ -1,6 +1,7 @@
 import * as CANNON from 'cannon-es';
 import { TableType } from './Table.js';
 import { PlayerType, playerTypeSchema } from '../game.schema.js';
+import { BaseLogger } from 'pino';
 
 export default class Ball {
   public body: CANNON.Body;
@@ -9,7 +10,7 @@ export default class Ball {
   private currentHitTable: TableType | null = null;
   private previousHitTable: TableType | null = null;
 
-  constructor() {
+  constructor(private readonly logger: BaseLogger) {
     const material = new CANNON.Material('ballMaterial');
     this.body = new CANNON.Body({
       mass: 0.0027,
@@ -48,11 +49,28 @@ export default class Ball {
     this.lastRacketPlayerId = playerId;
     this.previousHitTable = null;
     this.currentHitTable = null;
+    this.logger.debug(
+      {
+        lastRacketPlayerId: this.lastRacketPlayerId,
+        currentHitTable: this.currentHitTable,
+        previousHitTable: this.previousHitTable,
+      },
+      'recordRacketCollision()',
+    );
   }
 
   recordTableCollision(tableType: TableType) {
     this.previousHitTable = this.currentHitTable;
     this.currentHitTable = tableType;
+
+    this.logger.debug(
+      {
+        lastRacketPlayerId: this.lastRacketPlayerId,
+        currentHitTable: this.currentHitTable,
+        previousHitTable: this.previousHitTable,
+      },
+      'recordTableCollision()',
+    );
   }
 
   getLastRacketPlayerId(): number | null {
