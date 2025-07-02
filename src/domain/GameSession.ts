@@ -19,6 +19,7 @@ export default class GameSession {
   private readonly gameSessions: Map<number, GameSessionInfo>;
   private readonly PLAYER_WAITING_TIMEOUT = 30 * 1000;
   private readonly INITIAL_WAITING_TIMEOUT = 120 * 1000;
+  private readonly DISCONNECT_DELAY_MS = 3000;
 
   constructor(
     private readonly io: Server,
@@ -242,7 +243,7 @@ export default class GameSession {
     setTimeout(() => {
       this.io.to(`match:${matchId}`).disconnectSockets(true);
       this.logger.info('All socket connections have been disconnected');
-    }, 3000);
+    }, this.DISCONNECT_DELAY_MS);
 
     this.gameSessions.delete(matchId);
     this.logger.info(`Match session ${matchId} has been cleaned up`);
