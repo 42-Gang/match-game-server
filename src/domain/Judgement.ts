@@ -166,14 +166,9 @@ export default class Judgement {
 
   private createResult(roundOver: boolean): JudgementResult {
     if (this.scoreManager.isGameOver()) {
-      const winnerId =
-        this.scoreManager.getWinner() === playerTypeSchema.enum.PLAYER1
-          ? this.player1Id
-          : this.player2Id;
-      const loserId =
-        this.scoreManager.getWinner() === playerTypeSchema.enum.PLAYER1
-          ? this.player2Id
-          : this.player1Id;
+      const winner = this.scoreManager.getWinner();
+      const winnerId = winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id;
+      const loserId = winner === playerTypeSchema.enum.PLAYER1 ? this.player2Id : this.player1Id;
 
       return judgementResultSchema.parse({
         gameOver: this.scoreManager.isGameOver(),
