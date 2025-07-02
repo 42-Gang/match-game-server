@@ -68,25 +68,39 @@ export default class Judgement {
   }
 
   private onTableHit(data: CollisionData): boolean {
-    const { currentHitTable, previousHitTable } = data;
-    if (currentHitTable !== previousHitTable || currentHitTable === null) {
-      return false;
+    const { currentHitTable, previousHitTable, lastHitRacket } = data;
+    this.logger.debug({ data }, 'onTableHit called');
+
+    // 마지막으로 충돌한 라켓과 현재 테이블 충돌이 같은 쪽이면 패배
+    if (lastHitRacket === this.player1Id && currentHitTable === TableType.PLAYER1) {
+      this.updateState(playerTypeSchema.enum.PLAYER2);
+      return true;
+    }
+    if (lastHitRacket === this.player2Id && currentHitTable === TableType.PLAYER2) {
+      this.updateState(playerTypeSchema.enum.PLAYER1);
+      return true;
     }
 
-    const scoringMap: Record<TableType, PlayerType> = {
-      [TableType.PLAYER1]: playerTypeSchema.enum.PLAYER2,
-      [TableType.PLAYER2]: playerTypeSchema.enum.PLAYER1,
-    };
-
-    const scoringPlayer = scoringMap[currentHitTable];
-
-    if (!scoringPlayer) {
-      this.logger.warn({ data }, 'Could not determine scoring player from table hit.');
-      return false;
+    // 현재 테이블 이전 테이블이 같을 경우, 마지막 채가 반대편 채라면 피배
+    if (
+      lastHitRacket === this.player1Id &&
+      currentHitTable == TableType.PLAYER2 &&
+      previousHitTable === TableType.PLAYER2
+    ) {
+      this.updateState(playerTypeSchema.enum.PLAYER1);
+      return true;
     }
 
-    this.updateState(scoringPlayer);
-    return true;
+    if (
+      lastHitRacket === this.player2Id &&
+      currentHitTable == TableType.PLAYER1 &&
+      previousHitTable === TableType.PLAYER1
+    ) {
+      this.updateState(playerTypeSchema.enum.PLAYER2);
+      return true;
+    }
+
+    return false;
   }
 
   private onFloorHit(data: CollisionData): void {
