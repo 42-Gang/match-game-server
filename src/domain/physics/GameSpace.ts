@@ -24,11 +24,8 @@ export interface CollisionEvent {
 }
 
 export default class GameSpace {
-  private readonly world: CANNON.World = new CANNON.World({
-    gravity: new CANNON.Vec3(0, -9.81, 0),
-  });
-
-  private onCollision?: { (event: CollisionEvent): void };
+  private readonly world: CANNON.World;
+  private onCollision?: (event: CollisionEvent) => Promise<void>;
   private readonly originalGravity: CANNON.Vec3;
 
   private readonly floorBody: CANNON.Body;
@@ -41,14 +38,19 @@ export default class GameSpace {
     private readonly racket1: Racket,
     private readonly racket2: Racket,
     private readonly logger: BaseLogger,
+    private readonly gravityY: number,
   ) {
+    this.world = new CANNON.World({
+      gravity: new CANNON.Vec3(0, this.gravityY, 0),
+    });
+
     this.originalGravity = this.world.gravity.clone();
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
     this.world.gravity.set(0, 0, 0);
 
     this.floorBody = new CANNON.Body({
-      mass: 0, // 질량이 0이면 움직이지 않는 static Body가 됩니다.
+      mass: 0,
       shape: new CANNON.Plane(),
       material: this.floorMaterial,
     });
@@ -75,7 +77,7 @@ export default class GameSpace {
     this.reset(playerTypeSchema.enum.PLAYER1);
   }
 
-  public onCollisionEvent(callback: (event: CollisionEvent) => void) {
+  public onCollisionEvent(callback: (event: CollisionEvent) => Promise<void>) {
     this.onCollision = callback;
   }
 
@@ -120,7 +122,6 @@ export default class GameSpace {
   }
 
   reset(player: PlayerType) {
-    // this.status = GameStatus.STANDBY;
     this.world.gravity.set(0, 0, 0);
 
     const racket1InitialPos = new CANNON.Vec3(2, 0.8, 0);
@@ -146,6 +147,27 @@ export default class GameSpace {
 
   step(dt: number): void {
     this.world.step(dt, dt, 10);
+
+    this.clampBallVelocity();
+  }
+
+  private readonly MAX_BALL_SPEED = 3;
+  private readonly VELOCITY_DAMPING_FACTOR = 0.95;
+
+  private clampBallVelocity() {
+    const velocity = this.ball.body.velocity;
+    const speed = velocity.length();
+
+    if (speed > this.MAX_BALL_SPEED) {
+      this.ball.body.velocity.scale(this.VELOCITY_DAMPING_FACTOR, this.ball.body.velocity);
+      this.ball.body.angularVelocity.scale(
+        this.VELOCITY_DAMPING_FACTOR,
+        this.ball.body.angularVelocity,
+      );
+      this.logger.debug(
+        `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
+      );
+    }
   }
 
   getGameObjectsPositions(): GameObjectsPositionsType {
@@ -157,18 +179,12 @@ export default class GameSpace {
   }
 
   updateRacketPosition(playerId: number, x: number, y: number, z: number) {
-    // if (!this.isGameReadyOrPlaying()) {
-    //   // this.logger.warn(
-    //   //   `Player ${playerId} tried to update racket position while game is not in READY or PLAYING state.`,
-    //   // );
-    //   return;
-    // }
     const racket = this.getRacketByPlayerId(playerId);
     let clampedX;
     if (playerId === this.racket1.getPlayerId()) {
-      clampedX = this.clamp(x, 0, 2);
+      clampedX = this.clamp(x, 0, 4);
     } else {
-      clampedX = this.clamp(x, -2, 0);
+      clampedX = this.clamp(x, -4, 0);
     }
     const clampedZ = this.clamp(z, -1.5, 1.5);
     racket.updatePositionTest(clampedX, y, clampedZ);
@@ -199,7 +215,7 @@ export default class GameSpace {
     throw new Error(`Player with ID ${playerId} does not have a racket.`);
   }
 
-  private handleCollision(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
+  private async handleCollision(event: { bodyA: CANNON.Body; bodyB: CANNON.Body }) {
     if (!this.onCollision) {
       this.logger.error(`Collision event handler is not set.`);
       throw new Error(`Collision event handler is not set.`);
@@ -214,7 +230,7 @@ export default class GameSpace {
     }
 
     if (otherBody === this.racket1.body || otherBody === this.racket2.body) {
-      this.onCollision({
+      await this.onCollision({
         type: CollisionEventType.BALL_RACKET,
         ball: this.ball,
         racket: otherBody === this.racket1.body ? this.racket1 : this.racket2,
@@ -223,7 +239,7 @@ export default class GameSpace {
     }
 
     if (otherBody === this.tablePlayer1.body || otherBody === this.tablePlayer2.body) {
-      this.onCollision({
+      await this.onCollision({
         type: CollisionEventType.BALL_TABLE,
         ball: this.ball,
         table: otherBody === this.tablePlayer1.body ? this.tablePlayer1 : this.tablePlayer2,
@@ -232,7 +248,7 @@ export default class GameSpace {
     }
 
     if (otherBody === this.floorBody) {
-      this.onCollision({
+      await this.onCollision({
         type: CollisionEventType.BALL_FLOOR,
         ball: this.ball,
       });

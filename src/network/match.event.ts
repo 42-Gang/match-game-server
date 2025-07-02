@@ -5,6 +5,7 @@ export const MATCH_SOCKET_EVENTS = {
   COUNTDOWN: 'game-countdown',
   COUNTDOWN_CANCELLED: 'game-countdown-cancelled',
   GAME_START: 'game-start',
+  GAME_END: 'game-end',
   PLAYER_CONNECTED: 'player-connected',
   PLAYER_DISCONNECTED: 'player-disconnected',
   WAITING_FOR_PLAYER: 'waiting-for-player',

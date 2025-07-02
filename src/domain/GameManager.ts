@@ -6,6 +6,8 @@ import { PlayerType, playerTypeSchema } from './game.schema.js';
 import { MATCH_SOCKET_EVENTS } from '../network/match.event.js';
 import { socketCountDownSchema } from '../network/schemas/count-down.socket.schema.js';
 import Ball from './physics/Ball.js';
+import { socketGameEndSchema } from '../network/schemas/game-end.socket.schema.js';
+import { matchResultProducer } from '../infra/kafka/producers/match.topic.producer.js';
 
 export enum GameStatus {
   WAITING_FOR_PLAYERS, // 두 유저가 모두 접속하지 않은 경우
@@ -28,6 +30,9 @@ export default class GameManager {
     private readonly logger: BaseLogger,
     private readonly judgement: Judgement,
     private readonly socketRoom: BroadcastOperator<DefaultEventsMap, unknown>,
+    private readonly player1Id: number,
+    private readonly player2Id: number,
+    private readonly matchId: number,
   ) {
     this.gameSpace.onCollisionEvent((event) => this.handleCollision(event));
   }
@@ -37,7 +42,6 @@ export default class GameManager {
 
     this.gameSpace.reset(playerTypeSchema.enum.PLAYER1);
     this.logger.info('게임 초기화: 게임 공간 리셋 및 상태 설정');
-    // TODO: 양쪽 플레이어가 모두 준비되면 카운트다운 시작.
   }
 
   public update(dt: number): void {
@@ -46,11 +50,9 @@ export default class GameManager {
     }
 
     this.gameSpace.step(dt);
-    // const positions = this.gameSpace.getGameObjectsPositions(); <- 제거 예정
-    // this.socketRoom.emit(MATCH_SOCKET_EVENTS.GAME_STATE, positions); <- 제거 예정
   }
 
-  private handleCollision(event: CollisionEvent) {
+  private async handleCollision(event: CollisionEvent) {
     switch (event.type) {
       case CollisionEventType.BALL_RACKET:
         if (!event.racket) {
@@ -77,7 +79,7 @@ export default class GameManager {
           previousHitTable: this.ball.getPreviousHitTable(),
         });
         this.logger.debug(tableJudgeCollision, '충돌 판정 결과 (테이블 충돌)');
-        this.processRoundResult(tableJudgeCollision);
+        await this.processRoundResult(tableJudgeCollision);
         break;
 
       case CollisionEventType.BALL_FLOOR:
@@ -89,13 +91,9 @@ export default class GameManager {
           previousHitTable: this.ball.getPreviousHitTable(),
         });
         this.logger.debug(floorJudgeCollision, '충돌 판정 결과 (바닥 충돌)');
-        this.processRoundResult(floorJudgeCollision);
+        await this.processRoundResult(floorJudgeCollision);
         break;
     }
-  }
-
-  public getStatus(): GameStatus {
-    return this.status;
   }
 
   public getGameObjectsPositions() {
@@ -108,11 +106,40 @@ export default class GameManager {
     this.logger.info('게임시작: 중력 활성화');
   }
 
-  private processRoundResult(judgeResult: JudgementResult) {
+  private async processRoundResult(judgeResult: JudgementResult) {
     if (judgeResult.gameOver) {
-      this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
       this.status = GameStatus.GAME_OVER;
-      // TODO: 게임 종료 관련 처리 로직 (예: 결과 전송, 룸 정리)
+      this.logger.info(`게임 종료: 승자 - ${judgeResult.winner}`);
+
+      const { player1Score, player2Score } = judgeResult.score;
+      if (
+        judgeResult.winnerId === undefined ||
+        judgeResult.loserId === undefined ||
+        judgeResult.winner === null
+      ) {
+        this.logger.error('점수 정보가 누락되었습니다. 게임 종료를 처리할 수 없습니다.');
+        throw new Error('점수 정보가 누락되었습니다. 게임 종료를 처리할 수 없습니다.');
+      }
+
+      this.socketRoom.emit(MATCH_SOCKET_EVENTS.MATCH_SCORE, { player1Score, player2Score });
+      this.socketRoom.emit(
+        MATCH_SOCKET_EVENTS.GAME_END,
+        socketGameEndSchema.parse({
+          winner: judgeResult.winner,
+          winnerId: judgeResult.winnerId,
+        }),
+      );
+      await matchResultProducer({
+        matchId: this.matchId,
+        player1Id: this.player1Id,
+        player2Id: this.player2Id,
+        score: {
+          player1: player1Score,
+          player2: player2Score,
+        },
+        winnerId: judgeResult.winnerId,
+        loserId: judgeResult.loserId,
+      });
       return;
     }
 
@@ -179,5 +206,9 @@ export default class GameManager {
     clearInterval(this.countdownInterval);
     this.countdownInterval = null;
     this.logger.info('Countdown cleared');
+  }
+
+  public isGameOver(): boolean {
+    return this.status === GameStatus.GAME_OVER;
   }
 }

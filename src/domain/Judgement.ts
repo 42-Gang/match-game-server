@@ -5,10 +5,12 @@ import { TypeOf, z } from 'zod';
 import { ScoreManager } from './ScoreManager.js';
 import { ServeManager } from './ServeManager.js';
 
-export const judgementResult = z.object({
+export const judgementResultSchema = z.object({
   gameOver: z.boolean().default(false), // 게임이 종료되었는지
   roundOver: z.boolean().default(false), // 라운드가 종료되었는지
   winner: playerTypeSchema.nullable(), // 게임 우승자 (게임이 종료된 경우만 값이 존재)
+  winnerId: z.number().optional(), // 우승자의 플레이어 ID (게임이 종료된 경우만 값이 존재)
+  loserId: z.number().optional(), // 패자의 플레이어 ID (게임이 종료된 경우만 값이 존재)
   score: scoreSchema, // 현재 스코어
   nextServingPlayer: playerTypeSchema.optional(), // 서브권을 가진 플레이어
 });
@@ -25,7 +27,7 @@ export const collisionDataSchema = z.object({
   target: z.nativeEnum(CollisionTarget),
 });
 
-export type JudgementResult = TypeOf<typeof judgementResult>;
+export type JudgementResult = TypeOf<typeof judgementResultSchema>;
 export type CollisionData = TypeOf<typeof collisionDataSchema>;
 
 export default class Judgement {
@@ -35,11 +37,11 @@ export default class Judgement {
   constructor(
     private readonly player1Id: number,
     private readonly player2Id: number,
-    private readonly scoreToWin: number,
     private readonly logger: Logger,
+    private readonly scoreToWin: number,
   ) {
     this.scoreManager = new ScoreManager(this.scoreToWin);
-    this.serveManager = new ServeManager(logger);
+    this.serveManager = new ServeManager(logger, this.scoreToWin);
   }
 
   judgeCollision(data: CollisionData): JudgementResult {
@@ -164,19 +166,25 @@ export default class Judgement {
 
   private createResult(roundOver: boolean): JudgementResult {
     if (this.scoreManager.isGameOver()) {
-      return {
+      const winner = this.scoreManager.getWinner();
+      const winnerId = winner === playerTypeSchema.enum.PLAYER1 ? this.player1Id : this.player2Id;
+      const loserId = winner === playerTypeSchema.enum.PLAYER1 ? this.player2Id : this.player1Id;
+
+      return judgementResultSchema.parse({
         gameOver: this.scoreManager.isGameOver(),
         roundOver: true,
         winner: this.scoreManager.getWinner(),
+        winnerId,
+        loserId,
         score: this.scoreManager.getScoreDto(),
-      };
+      });
     }
-    return {
+    return judgementResultSchema.parse({
       gameOver: false,
       roundOver,
       winner: null,
       score: this.scoreManager.getScoreDto(),
       nextServingPlayer: this.serveManager.getServingPlayer(),
-    };
+    });
   }
 }

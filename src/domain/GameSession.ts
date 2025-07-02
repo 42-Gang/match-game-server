@@ -19,6 +19,7 @@ export default class GameSession {
   private readonly gameSessions: Map<number, GameSessionInfo>;
   private readonly PLAYER_WAITING_TIMEOUT = 30 * 1000;
   private readonly INITIAL_WAITING_TIMEOUT = 120 * 1000;
+  private readonly DISCONNECT_DELAY_MS = 3000;
 
   constructor(
     private readonly io: Server,
@@ -37,6 +38,12 @@ export default class GameSession {
     setInterval(() => {
       for (const [matchId, sessionInfo] of this.gameSessions.entries()) {
         const { gameManager } = sessionInfo;
+
+        if (gameManager.isGameOver()) {
+          this.logger.info(`Game over for match ID ${matchId}. Cleaning up session.`);
+          this.cleanupMatchSession(matchId);
+          continue;
+        }
 
         gameManager.update(fixedTimeStep);
         this.io
@@ -73,6 +80,7 @@ export default class GameSession {
       player2Id: asValue(input.player2Id),
       scoreToWin: asValue(input.scoreToWin),
       socketRoom: asValue(this.io.to(`match:${input.matchId}`)),
+      matchId: asValue(input.matchId),
     });
     const gameManager = sessionScope.resolve<GameManager>('gameManager');
 
@@ -231,6 +239,11 @@ export default class GameSession {
     const { gameManager, waitingIntervalId } = sessionInfo;
     gameManager.clearCountDown();
     this.cleanWaitingInterval(waitingIntervalId);
+
+    setTimeout(() => {
+      this.io.to(`match:${matchId}`).disconnectSockets(true);
+      this.logger.info('All socket connections have been disconnected');
+    }, this.DISCONNECT_DELAY_MS);
 
     this.gameSessions.delete(matchId);
     this.logger.info(`Match session ${matchId} has been cleaned up`);
