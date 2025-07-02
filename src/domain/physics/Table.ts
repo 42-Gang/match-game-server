@@ -11,8 +11,8 @@ export default class Table {
 
   constructor(
     tableType: TableType,
-    halfWidth = 1.5 / 2, // 0.7625m
-    halfThickness = 0.5, // 상판 두께
+    halfWidth = 1.5 / 2, // 0.75m
+    halfThickness = 0.025, // 상판 두께 5cm (현실적인 탁구대 두께)
     halfLength = 1.5 / 2, // 테이블 길이 반으로 분할
   ) {
     this.tableType = tableType;
