@@ -27,9 +27,11 @@ export default class GameSpace {
   private readonly world: CANNON.World;
   private onCollision?: (event: CollisionEvent) => Promise<void>;
   private readonly originalGravity: CANNON.Vec3;
-
-  private readonly floorBody: CANNON.Body;
   private readonly floorMaterial: CANNON.Material = new CANNON.Material('floor');
+  private readonly floorBody: CANNON.Body;
+
+  private readonly VELOCITY_DAMPING_FACTOR = 0.95;
+  private readonly MAX_BALL_SPEED = 3;
 
   constructor(
     private readonly ball: Ball,
@@ -90,25 +92,26 @@ export default class GameSpace {
 
     // 테이블 1과 공의 접촉 재질
     const tablePlayer1ContactMaterial = new CANNON.ContactMaterial(ballMat, tablePlayer1Mat, {
-      restitution: 0.9, // 0 = 탄성 없음, 1 = 완전 탄성 충돌
-      friction: 0.1,
+      restitution: 1, // 0 = 탄성 없음, 1 = 완전 탄성 충돌
+      friction: 0.5,
     });
 
     // 테이블 2와 공의 접촉 재질
     const tablePlayer2ContactMaterial = new CANNON.ContactMaterial(ballMat, tablePlayer2Mat, {
-      restitution: 0.9,
-      friction: 0.1,
+      restitution: 1,
+      friction: 0.5,
     });
 
     // 라켓과 공의 접촉 재질
     const racket1ContactMaterial = new CANNON.ContactMaterial(ballMat, racket1Mat, {
       restitution: 0.2,
-      friction: 0.1,
+      friction: 0.5,
     });
     const racket2ContactMaterial = new CANNON.ContactMaterial(ballMat, racket2Mat, {
       restitution: 0.2,
-      friction: 0.1,
+      friction: 0.5,
     });
+
     const ballFloorContactMaterial = new CANNON.ContactMaterial(ballMat, this.floorMaterial, {
       restitution: 0.4,
       friction: 0.5,
@@ -151,9 +154,6 @@ export default class GameSpace {
     this.clampBallVelocity();
   }
 
-  private readonly MAX_BALL_SPEED = 3;
-  private readonly VELOCITY_DAMPING_FACTOR = 0.95;
-
   private clampBallVelocity() {
     const velocity = this.ball.body.velocity;
     const speed = velocity.length();
@@ -163,9 +163,6 @@ export default class GameSpace {
       this.ball.body.angularVelocity.scale(
         this.VELOCITY_DAMPING_FACTOR,
         this.ball.body.angularVelocity,
-      );
-      this.logger.debug(
-        `공의 속도가 제한되었습니다: ${speed.toFixed(2)} -> ${this.ball.body.velocity.length().toFixed(2)}`,
       );
     }
   }
