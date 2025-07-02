@@ -7,6 +7,7 @@ import Judgement from '../domain/Judgement.js';
 import Ball from '../domain/physics/Ball.js';
 import Racket from '../domain/physics/Racket.js';
 import Table, { TableType } from '../domain/physics/Table.js';
+import { playerTypeSchema } from '../domain/game.schema.js';
 
 export async function createDiContainer() {
   const diContainer = createContainer({
@@ -35,11 +36,13 @@ export async function createDiContainer() {
       .scoped()
       .inject((container) => ({
         playerId: (container.cradle as any).player1Id,
+        playerType: playerTypeSchema.enum.PLAYER1,
       })),
     racket2: asClass(Racket)
       .scoped()
       .inject((container) => ({
         playerId: (container.cradle as any).player2Id,
+        playerType: playerTypeSchema.enum.PLAYER2,
       })),
     tablePlayer1: asClass(Table)
       .scoped()
