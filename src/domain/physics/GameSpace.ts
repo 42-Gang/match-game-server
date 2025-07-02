@@ -78,9 +78,7 @@ export default class GameSpace {
   }
 
   public onCollisionEvent(callback: (event: CollisionEvent) => Promise<void>) {
-    this.onCollision = async (event: CollisionEvent) => {
-      return callback(event);
-    };
+    this.onCollision = callback;
   }
 
   private setupContactMaterials() {
