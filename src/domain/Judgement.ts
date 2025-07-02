@@ -81,7 +81,7 @@ export default class Judgement {
       return true;
     }
 
-    // 현재 테이블 이전 테이블이 같을 경우, 마지막 채가 반대편 채라면 피배
+    // A 테이블에 공이 두 번 튀었을 경우, 마지막으로 공을 친 B 플레이어가 득점.
     if (
       lastHitRacket === this.player1Id &&
       currentHitTable == TableType.PLAYER2 &&
