@@ -17,7 +17,7 @@ export default class Racket {
     this.body.sleepState = CANNON.Body.AWAKE;
 
     // playerType에 따라 기울이기
-    const baseTilt = Math.PI / 4.5; // 40도
+    const baseTilt = (Math.PI / 180) * 40; // 40도
     const tiltAngle = this.playerType === playerTypeSchema.enum.PLAYER1 ? -baseTilt : baseTilt;
     const xAxis = new CANNON.Vec3(0, 0, -1);
     this.body.quaternion.setFromAxisAngle(xAxis, tiltAngle);
