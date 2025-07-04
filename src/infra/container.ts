@@ -11,6 +11,8 @@ import { playerTypeSchema } from '../domain/game.schema.js';
 import { BaseLogger } from 'pino';
 
 export interface Cradle {
+  container: AwilixContainer<Cradle>;
+
   // primitive values
   player1Id: number;
   player2Id: number;
@@ -35,6 +37,10 @@ export interface Cradle {
 export async function createDiContainer(): Promise<AwilixContainer<Cradle>> {
   const diContainer = createContainer<Cradle>({
     injectionMode: 'CLASSIC',
+  });
+
+  diContainer.register({
+    container: asValue(diContainer),
   });
 
   // 1) primitive 값들
