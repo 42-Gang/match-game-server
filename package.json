@@ -27,6 +27,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@opentelemetry/auto-instrumentations-node": "^0.62.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.203.0",
+    "@opentelemetry/instrumentation-pino": "^0.50.0",
+    "@opentelemetry/sdk-node": "^0.203.0",
     "awilix": "^12.0.5",
     "cannon-es": "^0.20.0",
     "close-with-grace": "^2.2.0",
