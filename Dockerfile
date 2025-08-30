@@ -21,7 +21,7 @@ RUN corepack enable \
 
 # package.json, lockfile 복사 후 devDependencies 포함 설치
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
 
