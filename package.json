@@ -27,6 +27,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.62.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.203.0",
     "@opentelemetry/instrumentation": "^0.203.0",
@@ -41,11 +42,11 @@
     "kafkajs": "^2.2.4",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
+    "prisma": "^6.5.0",
     "redis": "^5.1.0",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
-    "zod": "^3.25.23",
-    "prisma": "^6.5.0"
+    "zod": "^3.25.23"
   },
   "devDependencies": {
     "@eslint/config-array": "^0.19.2",
@@ -73,5 +74,6 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.0.9",
     "vitest-mock-extended": "^3.0.1"
-  }
+  },
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }
