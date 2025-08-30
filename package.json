@@ -4,9 +4,9 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "start": "npm run build:ts && dotenv -e .env -- node dist/src/main.js",
-    "prod": "node dist/src/main.js",
-    "dev": "dotenv -e .env.dev -- tsx watch src/main.ts",
+    "start": "npm run build:ts && dotenv -e .env -- node --import ./dist/src/tracing.js dist/src/main.js",
+    "prod": "node --import ./dist/src/setup-tracing.js dist/src/main.js",
+    "dev": "dotenv -e .env.dev -- tsx watch --import ./dist/src/setup-tracing.js src/main.ts",
     "run:ts": "tsx src/main.ts",
     "watch:ts": "tsx watch src/main.ts",
     "build:ts": "tsc",
@@ -29,8 +29,10 @@
   "dependencies": {
     "@opentelemetry/auto-instrumentations-node": "^0.62.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.203.0",
+    "@opentelemetry/instrumentation": "^0.203.0",
     "@opentelemetry/instrumentation-pino": "^0.50.0",
     "@opentelemetry/sdk-node": "^0.203.0",
+    "@prisma/instrumentation": "^6.13.0",
     "awilix": "^12.0.5",
     "cannon-es": "^0.20.0",
     "close-with-grace": "^2.2.0",

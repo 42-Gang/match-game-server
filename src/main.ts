@@ -1,4 +1,3 @@
-import './tracing.js';
 import process from 'node:process';
 import closeWithGrace from 'close-with-grace';
 import { Server, Server as SocketIOServer } from 'socket.io';

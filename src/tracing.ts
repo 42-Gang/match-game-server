@@ -1,7 +1,7 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
+import { PrismaInstrumentation } from '@prisma/instrumentation';
 
 if (!process.env.JAEGER_ENDPOINT) {
   throw new Error('JAEGER_ENDPOINT environment variable is not set');
@@ -14,7 +14,26 @@ const sdk = new NodeSDK({
     headers: {},
   }),
   serviceName: 'match-game-service',
-  instrumentations: [getNodeAutoInstrumentations(), new PinoInstrumentation()],
+  instrumentations: [
+    getNodeAutoInstrumentations({
+      '@opentelemetry/instrumentation-kafkajs': {
+        enabled: true,
+        producerHook: (span, { topic, message }) =>
+          span.setAttributes({
+            'kafka.topic': topic,
+            'kafka.message.key': message.key ? message.key.toString() : undefined,
+            'kafka.message.value': message.value ? message.value.toString() : undefined,
+          }),
+        consumerHook: (span, { topic, message }) =>
+          span.setAttributes({
+            'kafka.topic': topic,
+            'kafka.message.key': message.key ? message.key.toString() : undefined,
+            'kafka.message.value': message.value ? message.value.toString() : undefined,
+          }),
+      },
+    }),
+    new PrismaInstrumentation(),
+  ],
 });
 
 sdk.start();
