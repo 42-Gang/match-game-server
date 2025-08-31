@@ -1,25 +1,30 @@
 # 1. Build Stage
 FROM node:22-alpine AS builder
-
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+
+RUN corepack enable \
+ && corepack prepare pnpm@latest --activate
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build:ts
+RUN pnpm run build:ts
 
 # 2. Production Stage
-FROM node:22-alpine
-
+FROM node:22-alpine AS runner
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm install --omit=dev
+RUN corepack enable \
+ && corepack prepare pnpm@latest --activate
+
+# package.json, lockfile 복사 후 devDependencies 포함 설치
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-# ✅ ENTRYPOINT에서 prisma migrate 실행 (실제 런타임에서 DB 접근 가능할 때!)
-ENTRYPOINT ["/bin/sh", "-c", "npm run prod"]
+ENTRYPOINT ["/bin/sh", "-c", "pnpm run prod"]
