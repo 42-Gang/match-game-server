@@ -3,19 +3,20 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { PrismaInstrumentation } from '@prisma/instrumentation';
 import { Span } from '@opentelemetry/api';
+import type { Message as KafkajsMessage } from 'kafkajs';
 
 if (!process.env.JAEGER_ENDPOINT) {
   throw new Error('JAEGER_ENDPOINT environment variable is not set');
 }
 console.log(`Using Jaeger endpoint: ${process.env.JAEGER_ENDPOINT}`);
 
-interface KafkajsMessage {
-  key?: Buffer | string | null;
-  value: Buffer | string | null;
-  partition?: number;
-  headers?: Record<string, Buffer | string | (Buffer | string)[] | undefined>;
-  timestamp?: string;
-}
+// interface KafkajsMessage {
+//   key?: Buffer | string | null;
+//   value: Buffer | string | null;
+//   partition?: number;
+//   headers?: Record<string, Buffer | string | (Buffer | string)[] | undefined>;
+//   timestamp?: string;
+// }
 
 const kafkaMessageHook = (
   span: Span,
